@@ -1,90 +1,69 @@
 # loop-engineer-template
 
-A starter template for building **loop engineers**: agents that get triggered on their own,
-pick up work, ship it, verify it, and log what they learned, so the work compounds without you
-prompting every step. It's the productized version of the setup my team runs in production, and
-what I teach at [AI Builder Club](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template).
+一个用于构建**循环工程师（loop engineer）**的启动模板：这类 agent 能自行被触发、领取工作、交付成果、验证结果，并记录所学到的东西，从而让成果在无需你逐步提示的情况下不断复利累积。它是我团队在生产环境中实际运行的这套机制的产品化版本，也是我在 [AI Builder Club](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template) 上所教授的内容。
 
-## What's a loop engineer?
+## 什么是循环工程师？
 
-The shift: you stop prompting a coding agent task-by-task, and start **designing loops**.
+转变在于：你不再逐任务地去提示一个编码 agent，而是开始**设计循环**。
 
-A loop is an agent that wakes up on a trigger (a cron, a webhook, an incident, another agent),
-does some investigation and work, and writes what it found and did into a shared, file-based
-memory. Next run it reads that memory and keeps going. The real power is **compounding**: many
-loops (support, SEO, product, ads) read and write the *same* folders, so a friction the support
-loop logs can get picked up by the product loop, and a keyword the ads loop finds can feed the
-SEO loop. One shared brain, many loops.
+一个循环（loop）就是一个 agent，它会在某个触发条件（定时任务、webhook、一次事故、另一个 agent）下醒来，做一些调研和工作，并把发现与所做的事写进一个共享的、基于文件的记忆里。下一次运行时，它会读取这份记忆并继续推进。真正的力量在于**复利**：许多循环（客服、SEO、产品、广告）读写*同一个*文件夹，因此客服循环记录下的一个摩擦点，可能会被产品循环接手；广告循环发现的一个关键词，可以喂给 SEO 循环。一个共享的大脑，多个循环。
 
-Building one comes down to four ingredients:
+构建一个循环归结为四个要素：
 
-1. **Triggers:** cron, webhook, an incident, or another agent wakes the loop at the right time.
-2. **A file + logging structure:** the shared memory loops read and write (this template).
-3. **Tools & connectors:** so the agent can do real work (your skills/MCPs).
-4. **A codebase harness:** so the agent can run, test, and verify its own work autonomously.
+1. **触发器：** 定时任务、webhook、一次事故，或另一个 agent，在合适的时机唤醒循环。
+2. **文件与日志结构：** 循环读写的共享记忆（本模板）。
+3. **工具与连接器：** 让 agent 能做真正的工作（你的 skills/MCP）。
+4. **代码库 harness：** 让 agent 能自主运行、测试并验证自己的工作。
 
-This repo gives you #2 and #4 out of the box, plus the scaffolding to add the rest.
+本仓库开箱即用地提供了 #2 和 #4，并附上添加其余部分的脚手架。
 
-Want the full walkthrough of the concept and how my team designs compounding loops? Watch the video:
+想要完整了解这个概念，以及我团队如何设计可复利的循环？看这个视频：
 
 [![The loop engineer: how to design compounding agent loops](assets/video-thumbnail.png)](https://youtu.be/W6x-hb44C0c)
 
-## What's included
+## 包含哪些内容
 
 ```
 loop-engineer-template/
-├── ARCHITECTURE.md          the knowledge-base model (read this once)
-├── CLAUDE.md                template for YOUR context: fill in the {{PLACEHOLDER}}s
-├── LOG.md                   global work log (one line per bulk of work)
-├── signals/  docs/  domains/  starter artifact + loop folders, each README IS its schema
+├── ARCHITECTURE.md          知识库模型（读一次即可）
+├── CLAUDE.md                你自己上下文的模板：填入 {{PLACEHOLDER}}
+├── LOG.md                   全局工作日志（每一批工作一行）
+├── signals/  docs/  domains/  启动用的 artifact + 循环文件夹，每个 README 本身就是它的 schema
 └── .claude/
     ├── skills/
-    │   ├── new-loop/                 spin up a new loop (domain): scaffold, test-run, write its contract
-    │   ├── setup-codebase-harness/   the codebase harness: make any repo agent-ready
-    │   ├── dev-local-setup/            └ one-command dev stack
-    │   ├── e2e-setup/                  └ a real e2e test gate
-    │   └── pr/                         └ verify-before-ship (a fresh sub-agent proves it works, then opens the PR)
+    │   ├── new-loop/                 启动一个新循环（domain）：脚手架、试运行、写它的契约
+    │   ├── setup-codebase-harness/   代码库 harness：让任意仓库对 agent 可用
+    │   ├── dev-local-setup/            └ 一条命令的开发栈
+    │   ├── e2e-setup/                  └ 一个真正的 e2e 测试门禁
+    │   └── pr/                         └ 先验证再交付（由一个全新子 agent 证明它可用，再开 PR）
     └── workflows/
-        └── ship-change.js           ship a scoped code change end-to-end (worktree → implement → review → verify → PR)
+        └── ship-change.js           端到端交付一个范围明确的代码变更（worktree → 实现 → review → 验证 → PR）
 ```
 
-- **The knowledge base** (`ARCHITECTURE.md`, `signals/ docs/ domains/`, `LOG.md`) is the shared
-  memory: artifacts filed by kind, domains as loops, every file with an append-only `## Timeline`.
-- **The codebase harness** (the skills under `.claude/skills/`) is what makes a code repo
-  *legible, executable, and verifiable* so loops can ship code without you babysitting them.
+- **知识库**（`ARCHITECTURE.md`、`signals/ docs/ domains/`、`LOG.md`）是共享记忆：artifact 按类别归档，domain 即循环，每个文件都带一个只追加的 `## Timeline`。
+- **代码库 harness**（`.claude/skills/` 下的 skills）让一个代码仓库变得*可读、可执行、可验证*，从而循环能在无需你盯场的情况下交付代码。
 
-## Quickstart
+## 快速开始
 
-1. **Copy this folder** to wherever you want your agent's knowledge base to live.
-2. **Fill in `CLAUDE.md`:** replace every `{{PLACEHOLDER}}`. This is the context the agent reads
-   on every session, so it's the most important step.
-3. **Read `ARCHITECTURE.md`** so you and the agent share the same model. It's short.
-4. **Spin up your first loop.** In Claude Code: run `/new-loop`, then tell it the loop's name,
-   goal, and what it should do. It scaffolds `domains/<loop>/README.md`, does one real test run,
-   and logs it.
-5. **Harness the repo your loop ships into.** Run `/setup-codebase-harness` in that code repo so
-   the agent can run, test, and verify its own work.
-6. **Let it run.** Each session the agent reads `CLAUDE.md` + the relevant domain README, does
-   work, writes artifacts, and appends to `LOG.md`. For code changes it drives `ship-change.js`
-   and ships via `/pr`.
+1. **复制这个文件夹**到你想让 agent 的知识库存放的位置。
+2. **填写 `CLAUDE.md`：** 替换每一个 `{{PLACEHOLDER}}`。这是 agent 每次会话都会读取的上下文，所以是最重要的一步。
+3. **阅读 `ARCHITECTURE.md`**，让你和 agent 共享同一套模型。它很短。
+4. **启动你的第一个循环。** 在 Claude Code 中：运行 `/new-loop`，然后告诉它循环的名字、目标，以及它该做什么。它会脚手架生成 `domains/<loop>/README.md`，做一次真实试运行，并记录下来。
+5. **为你的循环交付代码的目标仓库装配 harness。** 在那个代码仓库里运行 `/setup-codebase-harness`，让 agent 能运行、测试并验证自己的工作。
+6. **让它跑起来。** 每次会话，agent 读取 `CLAUDE.md` + 相关 domain 的 README，做工作，写 artifact，并追加到 `LOG.md`。对于代码变更，它驱动 `ship-change.js` 并通过 `/pr` 交付。
 
-## Requirements
+## 前置要求
 
-- [Claude Code](https://claude.com/claude-code) (the skills + workflow assume it).
-- `git`. That's the only hard dependency.
-- `ship-change.js` and the harness skills want the repo they ship into to be a git repo with a
-  working build/test setup. They use Codex for review if available, and degrade gracefully if not.
+- [Claude Code](https://claude.com/claude-code)（这些 skills + workflow 假定你使用它）。
+- `git`。这是唯一硬性依赖。
+- `ship-change.js` 和这些 harness skills 要求它们交付代码的仓库是一个 git 仓库，并且有可用的构建/测试设置。如果有 Codex 可用，它们会用 Codex 做 review；没有也能优雅降级。
 
-## Go deeper
+## 深入
 
-This template gets you the structure. If you want to learn how to actually build agents and run
-compounding loops for your own business, that's what I go deep on inside
-**[AI Builder Club](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template)**:
-weekly live builder workshops, courses on production AI agents, AI coding beyond the basics, and
-building your first LLM apps, plus a community of people building the same way.
+本模板给你的是结构。如果你想学习如何真正为自有业务构建 agent 并运行可复利的循环，那就是我在 **[AI Builder Club](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template)** 里深入讲解的内容：每周的直播 builder 研讨会、关于生产级 AI agent 的课程、超越基础的 AI 编码，以及构建你的第一批 LLM 应用，外加一群用同样方式在构建的社区。
 
 [![Join AI Builder Club](assets/ai-builder-club.png)](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template)
 
-**→ [Join AI Builder Club](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template)**
+**→ [加入 AI Builder Club](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template)**
 
-Built by [Jason Zhou](https://x.com/jasonzhou1993) (AI Jason).
+由 [Jason Zhou](https://x.com/jasonzhou1993)（AI Jason）构建。

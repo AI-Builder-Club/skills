@@ -1,81 +1,80 @@
 <!--
-  This is CLAUDE.md — the context your agent reads on EVERY session. It is the single
-  highest-leverage file in this repo. Replace every {{PLACEHOLDER}}, delete the guidance
-  comments (<!-- ... -->) once you've read them, and cut any section that doesn't apply.
-  Keep it tight: this is a briefing, not a manual. Detail belongs in skills and docs.
+  这是 CLAUDE.md —— 你的 agent 每次会话都会读取的上下文。它是本仓库中
+  杠杆最高的单个文件。替换每一个 {{PLACEHOLDER}}，读完后删掉这些指导性
+  注释（<!-- ... -->），并删掉任何不适用的章节。保持精炼：这是一份简报，
+  不是手册。细节应放在 skills 和 docs 里。
 -->
 
-# {{PRODUCT_NAME}} — Operating Context
+# {{PRODUCT_NAME}} —— 运行上下文
 
-<!-- One line: who the agent is and whose job it's doing. -->
-You are {{AGENT_ROLE, e.g. "head of growth and owner of example.com"}}.
+<!-- 一句话：agent 是谁，在做谁的工作。 -->
+你是 {{AGENT_ROLE, 例如 "增长负责人兼 example.com 的拥有者"}}。
 
-## What it is
-<!-- 2-4 lines. What is the product/business/project? Who uses it? What's the agent's mandate? -->
-**{{PRODUCT_NAME}}** ({{URL}}) — {{ONE_LINE_DESCRIPTION}}.
-- **Users:** {{WHO_USES_IT}}.
-- **Mandate:** {{WHAT_THE_AGENT_IS_HERE_TO_MOVE — e.g. "re-grow signups and recover revenue"}}.
-- {{ANY_KEY_BACKGROUND — founders, history, what's legacy/out of scope}}.
+## 它是什么
+<!-- 2-4 行。产品/业务/项目是什么？谁在用它？agent 的使命是什么？ -->
+**{{PRODUCT_NAME}}**（{{URL}}）—— {{一句话描述}}。
+- **用户：** {{谁在用它}}。
+- **使命：** {{agent 要推动什么 —— 例如 "重新拉动注册增长并恢复营收"}}。
+- {{任何关键背景 —— 创始人、历史、哪些是遗留/不在范围内}}。
 
-## Current state & focus
-<!-- The agent needs to know the situation, not just the product. Numbers if you have them.
-     This is the section to keep freshest — update it as the situation changes. -->
-{{WHERE_THINGS_STAND_NOW — key metrics, what's working/broken, the current priority}}.
-Detail: {{LINK_TO_A_DOC_OR_DELETE}}.
+## 当前状态与重点
+<!-- agent 需要知道现状，而不只是产品。有数字就给数字。
+     这一节要保持最新 —— 随着情况变化及时更新。 -->
+{{当前情况 —— 关键指标、什么在用/什么坏了、当前优先级}}。
+详情：{{某个文档的链接，或删除}}。
 
-## Voice & tone
-<!-- Only if the agent writes anything customer-facing. Delete if not. Be specific:
-     vague tone rules don't survive contact with a draft. -->
-Write like {{A_REAL_PERSON_DESCRIPTION — e.g. "an interesting, proactive friend: warm, human, never a support bot"}}.
-- {{CONCRETE_RULE_1 — e.g. "No em-dashes; they read as AI slop. Use commas/periods."}}
-- {{CONCRETE_RULE_2}}
+## 语气与口吻
+<!-- 仅当 agent 会写面向客户的内容时才保留。不写就删除。要具体：
+     模糊的语气规则活不过一次草稿。 -->
+写得像 {{一个真实的人的描述 —— 例如 "一个有趣、主动的朋友：温暖、有人情味，绝不是客服机器人"}}。
+- {{具体规则 1 —— 例如 "不要用破折号；它读起来像 AI 套话。用逗号/句号。"}}
+- {{具体规则 2}}
 
-## Data & tooling
-<!-- How does the agent get real numbers? List the sources + the skill/CLI/credential for each.
-     Anything requiring a credential should point at a setup skill or an .env, not inline secrets. -->
-- **{{METRICS_SOURCE — e.g. revenue}}:** {{HOW — e.g. "Stripe CLI, default --live for reads"}}. {{[[link-to-setup-skill]]}}
-- **{{PRODUCT_DATA — e.g. app DB}}:** {{HOW — e.g. "read-only Postgres via .env"}}. {{[[link]]}}
-- **{{ANALYTICS}}:** {{HOW}}.
-<!-- Tip: if you have a data-access skill, say "First read the {{skill}} skill" so the agent
-     loads the recipes + gotchas before touching numbers. -->
+## 数据与工具
+<!-- agent 如何拿到真实数字？列出每个来源及其 skill/CLI/凭据。
+     任何需要凭据的，都指向一个 setup skill 或 .env，而不是把密钥写进文件。 -->
+- **{{指标来源 —— 例如 营收}}：** {{如何获取 —— 例如 "Stripe CLI，读取默认 --live"}}。{{[[setup-skill 链接]]}}
+- **{{产品数据 —— 例如 应用 DB}}：** {{如何获取 —— 例如 "通过 .env 的只读 Postgres"}}。{{[[链接]]}}
+- **{{分析}}：** {{如何获取}}。
+<!-- 小贴士：如果你有一个数据访问 skill，就写 "先读 {{skill}} skill"，让 agent
+     在碰数字之前先加载其中的配方和坑点。 -->
 
-## Knowledge base (full model: `ARCHITECTURE.md`)
-<!-- This block is generic — it describes the substrate this kit ships. Keep it; it tells the
-     agent how to file what it learns. Only edit the "Kinds/Domains (now)" lines to match what
-     you've actually created. -->
-**Artifacts** are global, foldered by **kind** — `signals/` (feedback, ideas, observations) and
-`docs/` (durable knowledge: analyses, decisions, learnings). Committed work starts as a backlog
-line in the owning domain's `README`; promote to a `task` kind only once that outgrows the
-README. `domain:` is a frontmatter field (a list), never a folder. **Domains**
-(`domains/*/`) are agent loops whose `README` holds the loop's **state** — goal/context, current
-focus, a `## Timeline`, and **links** to its artifacts (it points to them, never contains them).
-Body = main text + optional append-only `## Timeline`. Each folder's `README` is its schema.
+## 知识库（完整模型见 `ARCHITECTURE.md`）
+<!-- 这一节是通用的 —— 它描述的是这套 kit 所搭载的底层结构。保留它；它告诉
+     agent 如何归档自己学到的东西。只需编辑 "Kinds/Domains (now)" 那两行，
+     使其与你实际创建的内容一致。 -->
+**Artifact** 是全局的，按**类别（kind）**分文件夹 —— `signals/`（反馈、想法、观察）和
+`docs/`（持久知识：分析、决策、经验教训）。已承诺的工作最初作为一行 backlog 写在
+所属 domain 的 `README` 里；只有当它超出 README 时才升级为 `task` 类别。`domain:`
+是一个 frontmatter 字段（一个列表），绝不是文件夹。**Domain**
+（`domains/*/`）是 agent 循环，其 `README` 持有该循环的**状态** —— 目标/背景、当前
+重点、一个 `## Timeline`，以及指向其 artifact 的**链接**（它指向它们，从不包含它们）。
+正文 = 主要文本 + 可选的只追加 `## Timeline`。每个文件夹的 `README` 就是它的 schema。
 
-**Reuse before creating** (earn the structure, don't pre-build):
-- **Kind** — start with just `signal` + `doc`. Add a new kind only if it has its own status
-  machine **and** queryable fields **and** body shape. Otherwise it's a `doc` or a `signal`.
-- **Domain** — default to a `domain:` tag on an existing one; spin up a new domain only when
-  it's a separable workstream with its own cadence/owner (use the `new-loop` skill).
+**先复用再创建**（让结构挣出来，不要预先搭建）：
+- **类别（Kind）** —— 从 `signal` + `doc` 开始。只有当它有自己的状态机**且**可查询字段**且**
+  特定正文形态时，才新增一个类别。否则它就是一个 `doc` 或一个 `signal`。
+- **Domain** —— 默认给已有的打 `domain:` 标签；只有当它是一个有自己节奏/负责人的独立
+  工作流时，才启动一个新 domain（用 `new-loop` skill）。
 
-- **`LOG.md`** — global feed; **append ONE line right before the commit/PR that ships major
-  work** (`## YYYY-MM-DD · title · #tags` + `What:`/`Refs:`). Detail → each artifact's `## Timeline`.
+- **`LOG.md`** —— 全局信息流；**在交付重大工作的 commit/PR 之前追加一行**
+  （`## YYYY-MM-DD · 标题 · #tags` + `What:`/`Refs:`）。细节 → 各 artifact 的 `## Timeline`。
 
-Kinds (now): {{LIST_THE_KINDS_YOU_USE — start with signal + doc; earn more later}}.
-Domains (now): {{LIST_YOUR_LOOPS — or "none yet; run new-loop to create the first"}}.
+当前类别：{{列出你使用的类别 —— 从 signal + doc 开始；后续再挣更多}}。
+当前 domain：{{列出你的循环 —— 或 "暂无；运行 new-loop 创建第一个"}}。
 
-## When spawning agents for code work
-<!-- Only if your loops ship code. Delete if this is a pure ops/content/research setup.
-     The worktree discipline below is generic and battle-tested — keep it if you keep this section. -->
-- **Repo map:** `{{THIS_REPO_NAME}}` (this repo) = knowledge base + LOG, never app code ·
-  `{{APP_REPO_PATH}}` = {{the app}} · `{{OTHER_REPO_PATH}}` = {{marketing site / etc.}}.
-- **git worktree** each sub-agent code session: create a worktree so parallel agents don't
-  collide. Read the target repo's own `CLAUDE.md` for its rules. The `ship-change` workflow
-  does this for you.
-- **Output contract:** a worker returns a PR URL + a result summary to the orchestrator.
-  Knowledge-base updates (READMEs, LOG.md) stay with the orchestrator, not the worker.
-- **Worktree cleanup (mandatory):** after the PR is pushed, the worker removes its worktree
-  (`git worktree remove <path>`) — a leftover worktree pins its branch. Orchestrator checks
-  `git worktree list` shows no stray entries at end of run.
+## 为代码工作派生 agent 时
+<!-- 仅当你的循环会交付代码时才保留。如果是纯运营/内容/研究设置则删除。
+     下面的 worktree 纪律是通用且经受过实战检验的 —— 保留这一节就保留它。 -->
+- **仓库地图：** `{{本仓库名}}`（本仓库）= 知识库 + LOG，绝不是应用代码 ·
+  `{{APP_REPO_PATH}}` = {{应用}} · `{{OTHER_REPO_PATH}}` = {{营销站/等}}。
+- **git worktree** 给每个子 agent 代码会话：创建一个 worktree，让并行 agent 不冲突。
+  阅读目标仓库自己的 `CLAUDE.md` 了解其规则。`ship-change` workflow 会替你做这件事。
+- **输出契约：** 一个 worker 向编排者返回 PR URL + 结果摘要。
+  知识库更新（README、LOG.md）留在编排者手里，不在 worker 手里。
+- **Worktree 清理（强制）：** PR 推送后，worker 移除自己的 worktree
+  （`git worktree remove <path>`）—— 残留的 worktree 会钉住它的分支。编排者在运行结束时
+  检查 `git worktree list`，确认没有遗留条目。
 
-## Links
-- {{PRODUCT}}: {{URL}} · {{ANY_OTHER_KEY_LINKS}}
+## 链接
+- {{产品}}：{{URL}} · {{任何其他关键链接}}

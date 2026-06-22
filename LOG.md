@@ -1,28 +1,28 @@
-# Work log
+# 工作日志
 
-Append-only journal of finished work bulks, so anyone (human or agent) can catch up fast.
-Newest at the BOTTOM. Append an entry whenever a bulk of work wraps (ideally right before
-the commit that ships it). Keep entries SHORT: header line + What + Refs, nothing else.
+已完成工作批次的只追加日志，任何人（人或 agent）都能快速跟上进度。
+最新的在最下方。每当一批工作收尾时追加一条（最好就在交付它的 commit 之前）。
+保持条目简短：标题行 + What + Refs，仅此而已。
 
-**Entry grammar** (strict, one header line per entry):
+**条目语法**（严格，每条一个标题行）：
 ```
-## YYYY-MM-DD · Short title · #tag1 #tag2
-What: 1-2 lines, outcome first.
-Refs: [doc](path) (new|updated), repo PR/commit links.
+## YYYY-MM-DD · 简短标题 · #tag1 #tag2
+What: 1-2 行，结果优先。
+Refs: [doc](path) (new|updated)，仓库的 PR/commit 链接。
 ```
 
-**Tags** (reuse before inventing): add your own as loops emerge, e.g.
+**标签**（先复用再发明）：随着循环出现添加你自己的，例如
 #analysis #product #content #infra #skill #research #ops #revenue #growth
 
-**Retrieval recipes** (macOS; entry headers always start `## 20`):
+**检索配方**（macOS；条目标题始终以 `## 20` 开头）：
 ```bash
-# index of all entries (one line each)
+# 所有条目的索引（每条一行）
 grep '^## 20' LOG.md
-# last 5 entries, full
+# 最近 5 条，完整内容
 tail -r LOG.md | awk '{print} /^## 20/{c++; if(c==5) exit}' | tail -r
-# all entries about a topic
+# 某主题的所有条目
 awk '/^## 20/{p=/#product/} p' LOG.md
-# entries from a month
+# 某月的条目
 awk '/^## 20/{p=/^## 2026-06/} p' LOG.md
 ```
 

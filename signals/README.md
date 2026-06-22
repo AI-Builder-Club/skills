@@ -1,36 +1,36 @@
-# signals/ — evidence
+# signals/ —— 证据
 
-One file per **signal**: a piece of feedback, an idea, or an observation worth remembering.
-Signals are **deduped and frequency-counted** — when the same thing shows up again, you don't
-make a new file, you add a Timeline entry to the existing one and bump `frequency`.
+每个 **signal** 一个文件：一条反馈、一个想法、或一条值得记住的观察。
+Signal **去重并按频次计数** —— 当同样的东西再次出现，你不是新建一个文件，
+而是给已有的那个加一条 Timeline 并把 `frequency` 加一。
 
-This README is the schema. See `ARCHITECTURE.md` for the model.
+本 README 是它的 schema。模型见 `ARCHITECTURE.md`。
 
 ## Frontmatter
 
 ```yaml
 ---
 kind: signal
-category: feedback | idea | friction | observation   # what sort of signal
-frequency: 1                # how many times seen; increment on recurrence
-sources: []                 # where it came from (links, ticket ids, urls)
-domain: []                  # which loop(s) this feeds — a list of domain names
+category: feedback | idea | friction | observation   # 信号类型
+frequency: 1                # 被看到多少次；复发时递增
+sources: []                 # 来源（链接、ticket id、url）
+domain: []                  # 喂给哪些循环 —— 一个 domain 名字列表
 status: open | triaged | actioned | closed
 ---
 ```
 
-## Body
+## 正文
 
-A short statement of the signal (what, and why it matters), then an optional append-only
-`## Timeline` accumulating each sighting:
+一段对 signal 的简短陈述（是什么、为何重要），然后是可选的只追加
+`## Timeline`，累积每一次目击：
 
 ```
 ## Timeline
-2026-06-14 | support ticket #123 — user hit the same wall again
+2026-06-14 | 客服 ticket #123 —— 用户又撞到同一堵墙
 ```
 
-`frequency` = number of Timeline entries. Link related artifacts with `[[slug]]`.
+`frequency` = Timeline 条目数。用 `[[slug]]` 链接相关 artifact。
 
-## Naming
+## 命名
 
-`<short-kebab-slug>.md`, or a stable id like `FB-<n>.md` if you prefer running numbers.
+`<short-kebab-slug>.md`，或一个稳定 id 如 `FB-<n>.md`（如果你喜欢用流水号）。

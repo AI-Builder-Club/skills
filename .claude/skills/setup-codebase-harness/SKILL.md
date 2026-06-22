@@ -1,90 +1,83 @@
 ---
 name: setup-codebase-harness
 description: >
-  Master skill — set up the full agent harness for any repo so an agent can work
-  it reliably: legible (map-not-manual docs + custom lints), executable
-  (one-command dev stack), verifiable (e2e gate + a verify-before-ship loop), plus
-  commit hygiene and entropy control. Use when onboarding a new/unfamiliar codebase
-  to agent-driven development — "set up the harness", "make this repo agent-ready",
-  "harness this codebase".
+  主 skill —— 为任意仓库装配完整的 agent harness，让 agent 能可靠地工作于其上：
+  可读（地图而非手册的文档 + 自定义 lint）、可执行（一条命令的开发栈）、可验证
+  （e2e 门禁 + 先验证再交付的循环），外加提交卫生与熵控制。当要把一个新/陌生的
+  代码库接入 agent 驱动开发时使用 —— "装配 harness"、"让这个仓库对 agent 可用"、
+  "给这个代码库装 harness"。
 user_invocable: true
 ---
 
-# Set up the codebase harness
+# 装配代码库 harness
 
-**Harness engineering:** the model is fixed — what you engineer is the *scaffolding*
-around it (the environment, the docs, the feedback loops) so an agent can build and
-verify software with minimal human attention. Humans steer; agents execute. Your
-job is to make the repo **legible, executable, and verifiable.**
+**Harness 工程：** 模型是固定的 —— 你工程化的是它周围的*脚手架*
+（环境、文档、反馈回路），让 agent 能以最少的人力关注来构建和
+验证软件。人类掌舵；agent 执行。你的
+工作是让仓库**可读、可执行、可验证。**
 
-Work **incrementally and depth-first**: assess what exists, build the one missing
-capability, use it to unlock the next. Don't boil the ocean — set up what the repo
-actually needs. When the agent struggles, the fix is almost never "try harder" —
-ask *"what capability is missing, and how do I make it legible and enforceable?"*
-and add it.
+**增量地、深度优先地**工作：评估现有、搭建那一个缺失的
+能力、用它解锁下一步。不要试图煮干大海 —— 只装配仓库真正需要的。当 agent 卡住时，解决办法几乎从不是"再努力点" ——
+问*"缺什么能力，我怎么让它可读且可强制执行？"*然后加上它。
 
-This skill orchestrates the focused sub-skills: **`dev-local-setup`**,
-**`e2e-setup`**, **`pr`**.
+这个 skill 编排几个聚焦的子 skill：**`dev-local-setup`**、
+**`e2e-setup`**、**`pr`**。
 
-## 0. Assess
+## 0. 评估
 
-Survey the repo: stack, package manager, services/ports, infra deps, existing
-docs/tests/CI, and the *implicit* rules (buried in READMEs, PR comments, people's
-heads). Note what's missing per pillar below.
+勘察仓库：技术栈、包管理器、服务/端口、基础设施依赖、现有
+文档/测试/CI，以及*隐式*规则（埋在 README、PR 评论、人们脑子里的）。按下面的
+支柱记下缺什么。
 
-## 1. Legible — the agent can reason about the repo
+## 1. 可读 —— agent 能对仓库进行推理
 
-> What the agent can't see doesn't exist. Knowledge in chat threads / heads is
-> invisible — push it into versioned, repo-local artifacts.
+> agent 看不见的东西就不存在。聊天记录/脑子里的知识是
+> 不可见的 —— 把它们推进到版本化、仓库本地的 artifact 里。
 
-- **a) Map, not manual.** Shrink the root agent doc (`AGENTS.md` / `CLAUDE.md`) to a
-  ~100-line **table of contents**: one-line overview, project tree, **golden rules**
-  (the hard invariants), and a "where to look" table. Move the depth into a
-  structured **`docs/` system-of-record** (architecture, frontend, testing, domain
-  topics) with a `docs/index.md`. A monolithic instruction file rots and crowds out
-  the task — keep the map small and stable, disclose detail progressively.
-- **b) Custom lints with remediation.** Promote the prose golden rules into
-  **mechanical checks** — human taste captured once, enforced everywhere, every run.
-  One lint per invariant (layering / dependency direction, naming, no-`any`,
-  forbidden imports, file-size, structured logging). **Write the error message to
-  inject the fix** ("X isn't allowed here — do Y") so the remediation lands in agent
-  context. Wire them into the repo's linter + CI.
-- **c) (later) Keep docs honest.** A freshness / doc-gardening pass that flags docs
-  that no longer match the code and opens fix-up PRs.
+- **a) 地图，不是手册。** 把根 agent 文档（`AGENTS.md` / `CLAUDE.md`）缩到一份
+  ~100 行的**目录**：一行概述、项目树、**金科玉律**
+  （硬性不变量），以及一张"去哪看"的表。把深度移到一个结构化的**`docs/` 事实来源**
+  （架构、前端、测试、领域话题），带一个 `docs/index.md`。一个臃肿的指令文件会
+  腐烂并挤占任务空间 —— 让地图小而稳定，渐进地披露细节。
+- **b) 带修复指引的自定义 lint。** 把散文式的金科玉律提升为
+  **机械检查** —— 人类品味一次捕获，处处、每次运行强制执行。
+  一个不变量一条 lint（分层 / 依赖方向、命名、禁 `any`、
+  禁止的 import、文件大小、结构化日志）。**把修复方式写进错误信息**
+  （"X 不允许在这里 —— 改做 Y"），让修复直接落到 agent 上下文里。把它们接到仓库的 linter + CI。
+- **c)（之后）让文档保持诚实。** 一次新鲜度 / 文档养护 pass，标记不再
+  匹配代码的文档并开修复 PR。
 
-## 2. Executable — the agent can run & drive the app
+## 2. 可执行 —— agent 能运行并驱动应用
 
-- **`dev-local-setup`** → a one-command, reproducible local stack
-  (`scripts/dev-local.sh up`) running every service + infra.
-- Make the app **drivable**: browser via the `playwright-cli` skill; logs reachable.
-- *Advanced:* boot the app **per git worktree** so parallel agents don't collide; a
-  local, ephemeral observability stack (queryable logs/metrics) for perf/reliability
-  prompts.
+- **`dev-local-setup`** → 一条命令、可复现的本地栈
+  （`scripts/dev-local.sh up`）跑起每个服务 + 基础设施。
+- 让应用**可驱动**：通过 `playwright-cli` skill 操作浏览器；日志可触达。
+- *进阶：* 按 git worktree 启动应用，让并行 agent 不冲突；一个
+  本地、临时的可观测性栈（可查询的日志/指标）用于性能/可靠性
+  提示。
 
-## 3. Verifiable — the agent can prove it works
+## 3. 可验证 —— agent 能证明它可用
 
-- **`e2e-setup`** → a trustworthy e2e gate: real flows (not bypass), a reusable
-  auth/session helper, layered client → server → product assertions, video/trace
-  evidence, sandbox-only external services.
-- **`pr`** → the verify-before-ship loop: a fresh **verifier sub-agent drives the
-  real app** to confirm the just-built feature works; the main agent fixes until
-  green, runs the codified regression sweep, and opens a PR with a reviewable proof
-  link. Add the session helper so the verifier can reach login-gated features.
+- **`e2e-setup`** → 一个值得信赖的 e2e 门禁：真实流程（不走旁路）、一个可复用
+  的 auth/session helper、分层 client → server → product 断言、视频/trace
+  证据、仅沙箱的外部服务。
+- **`pr`** → 先验证再交付循环：一个全新的 **verifier 子 agent 驱动
+  真实应用**确认刚构建的功能可用；主 agent 修到全绿、跑固化的回归
+  扫描，并开一个带可 review 证据链接的 PR。加上 session helper，让 verifier 能触及登录门后的功能。
 
-## 4. Others — keep it coherent over time
+## 4. 其他 —— 让它在时间中保持一致
 
-- **Commit hygiene**: conventional commits + format/lint on commit (e.g. husky
-  lint-staged + commitlint). Keep merge gates **light** — at high agent throughput,
-  corrections are cheap and waiting is expensive.
-- **Garbage collection**: encode "golden principles", then run periodic cleanup
-  passes that open small refactor PRs — pay tech debt down continuously, not in
-  painful bursts. Human taste captured once, enforced on every line.
-- **Agent-to-agent review** for correctness-critical changes (independent reviewers,
-  not self-review).
+- **提交卫生**：约定式提交 + 提交时 format/lint（例如 husky
+  lint-staged + commitlint）。让合并门禁**轻量** —— 在高 agent 吞吐下，
+  修正很便宜，等待很昂贵。
+- **垃圾回收**：编码"金科玉律"，然后跑周期性清理
+  pass 开小重构 PR —— 持续地还技术债，而不是
+  痛苦地集中爆发。人类品味一次捕获，每行强制执行。
+- **agent 间 review** 用于正确性关键的变更（独立 review 者，
+  而非自审）。
 
-## Order & what you leave behind
+## 顺序与留下的东西
 
-**1a (map) → 2 (dev-local) → 3 (e2e + /pr)**, then **1b (lints)** and **4** as the
-repo matures. The artifacts — slim map + `docs/`, `scripts/dev-local.sh`, an `e2e/`
-suite, the `/pr` skill, and custom lints — are each a reusable, legible capability
-that compounds. Prefer "boring", composable, stable tech the agent can fully model.
+**1a（地图）→ 2（dev-local）→ 3（e2e + /pr）**，然后随着仓库成熟做
+**1b（lint）** 和 **4**。留下的 artifact —— 精简的地图 + `docs/`、`scripts/dev-local.sh`、
+一套 `e2e/`、`/pr` skill、以及自定义 lint —— 每一个都是可复用、可读、会复利的能力。偏好"无聊"、可组合、稳定、agent 能完全建模的技术。

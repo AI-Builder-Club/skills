@@ -1,9 +1,9 @@
 export const meta = {
   name: 'ship-change',
   description:
-    'Ship a focused code change end-to-end: create an isolated worktree, implement, simplify, review+fix blocking issues, verify locally, then open a PR (PR only if verification passes). Uses Codex for the review pass if it is available, and degrades to a normal review agent if not. If the target repo ships its own /pr skill, the verify+PR step is delegated to it.',
+    '端到端交付一个聚焦的代码变更：创建隔离 worktree、实现、简化、review+修阻塞性问题、本地验证，然后开 PR（仅在验证通过时）。如果有 Codex 可用则用于 review pass，否则降级为普通 review agent。如果目标仓库自带 /pr skill，则验证+PR 步骤委派给它。',
   whenToUse:
-    'A scoped change on an existing repo that should end in a PR. Pass args.task (what to build), args.repo (abs path). Optional: baseBranch, branch, verifyHints, openPr, runReview.',
+    '一个在已有仓库上、应以 PR 收尾的范围明确变更。传入 args.task（要构建什么）、args.repo（绝对路径）。可选：baseBranch、branch、verifyHints、openPr、runReview。',
   phases: [
     { title: 'Setup' },
     { title: 'Implement' },
@@ -24,10 +24,10 @@ if (!TASK || !REPO) {
   )
 }
 const BASE = a.baseBranch || 'main'
-const BRANCH_HINT = a.branch || '' // empty → Setup agent derives one
+const BRANCH_HINT = a.branch || '' // 空 → Setup agent 派生一个
 const VERIFY_HINTS = a.verifyHints || ''
-const OPEN_PR = a.openPr !== false // default true
-// review pass defaults on; accepts runReview, and runCodex for backward-compat
+const OPEN_PR = a.openPr !== false // 默认 true
+// review pass 默认开启；接受 runReview，以及为向后兼容接受 runCodex
 const RUN_REVIEW = a.runReview !== false && a.runCodex !== false
 
 // ───────────────────────── Phase 0: Setup (worktree) ─────────────────────────
@@ -46,62 +46,62 @@ const SETUP_SCHEMA = {
   },
 }
 const setup = await agent(
-  `Create an isolated git worktree to do an upcoming change in, WITHOUT disturbing the user's main checkout of the repo.
+  `创建一个隔离的 git worktree，用于做接下来的变更，且不打扰用户对仓库的主检出。
 
-Repo: ${REPO}
-Base branch: ${BASE}
-Desired feature branch: ${BRANCH_HINT || '(none given — derive a short, kebab-case, conventional branch name from the task below)'}
-Task the worktree is for (for branch-name derivation only — do NOT implement anything yet):
+仓库: ${REPO}
+基线分支: ${BASE}
+期望的功能分支: ${BRANCH_HINT || '（未提供 —— 从下方任务派生一个简短的 kebab-case 约定式分支名）'}
+该 worktree 所服务的任务（仅用于派生分支名 —— 暂不要实现任何东西）:
 """
 ${TASK}
 """
 
-Steps:
-1. cd ${REPO}. Run \`git fetch origin --prune\` (ignore failure if offline). Determine the freshest base ref: prefer \`origin/${BASE}\` if it exists, else local \`${BASE}\`.
-2. Pick the feature branch name (use the given one if provided, else derive e.g. feat/<slug> or fix/<slug>). Make sure it does not already exist (append -2 etc. if needed).
-3. Choose a worktree path OUTSIDE the main checkout: a sibling dir like \`<repo>-worktrees/<branch-slug>\` (create the parent dir if needed). Avoid nesting inside the repo.
-4. Create it: \`git -C ${REPO} worktree add <worktreePath> -b <branch> <baseRef>\`.
-5. Verify: the worktree path exists, \`git -C <worktreePath> rev-parse --abbrev-ref HEAD\` shows the new branch, and \`git -C <worktreePath> status\` is clean.
-6. **Carry over gitignored local env files.** \`git worktree add\` only populates version-controlled files, so a fresh worktree has NO \`.env\` files and the app can't boot — this silently blocks later verification. Copy the base checkout's ignored env files into the worktree, preserving relative paths:
-   - List ignored files: \`git -C ${REPO} ls-files --others --ignored --exclude-standard\`.
-   - Keep ONLY env files — basename matching \`.env\` or \`.env.*\` (e.g. \`.env\`, \`.env.local\`, \`.env.development\`). Filter with \`grep -E '(^|/)\\.env(\\.[^/]+)?$'\`. Do NOT copy node_modules/dist/build/cache artifacts.
-   - For each match \`<rel>\`: \`mkdir -p "<worktreePath>/$(dirname <rel>)"\` then \`cp "${REPO}/<rel>" "<worktreePath>/<rel>"\`. They stay gitignored in the worktree — confirm none show up in \`git -C <worktreePath> status\`.
-   - Record the copied relative paths in \`envFilesCopied\` (empty array if the repo has none — that's fine).
-7. **Warm the worktree's dependencies** so later stages (Implement/Simplify/Review/Verify) can run typecheck/lint/tests. A fresh worktree has NO \`node_modules\`. Set \`depsWarmed\` to which path you took. (This step is JS/Node-flavored; adapt to the repo's ecosystem — for non-Node repos, set depsWarmed='none' and let later stages set up the environment on demand.)
-   - If \`${REPO}/node_modules\` does NOT exist, set depsWarmed='none' and skip (nothing to warm; later stages install on demand).
-   - **FAST PATH (clone) — prefer this.** Valid ONLY when BOTH: (a) the base checkout is APFS (macOS) — just attempt the clone and fall back on error; AND (b) the worktree's lockfile matches the base's: \`diff -q "${REPO}/pnpm-lock.yaml" "<worktreePath>/pnpm-lock.yaml"\` identical (use whichever lockfile exists: pnpm-lock.yaml / package-lock.json / yarn.lock; if none, skip clone). When valid: enumerate top-level node_modules dirs via \`cd ${REPO} && find . -type d -name node_modules -prune | grep -v '/node_modules/'\` (root + each workspace package; NOT nested .pnpm ones). For EACH \`<rel>\`: \`mkdir -p "<worktreePath>/$(dirname <rel>)"\` then \`cp -c -R "${REPO}/<rel>" "<worktreePath>/<rel>"\` (\`-c\` = APFS clonefile, copy-on-write, near-instant, no extra disk; pnpm uses RELATIVE symlinks so the clone resolves at the new path). If \`cp -c\` errors (not APFS/cross-volume), abandon clone → fallback. On success set depsWarmed='clone'.
-   - **FALLBACK (install).** If clone isn't valid/failed but base had node_modules: \`cd <worktreePath> && pnpm install --prefer-offline\` (or npm ci / yarn matching the lockfile — global store is warm so it's link-mostly). Set depsWarmed='install'. If install would be too heavy to be worth it, instead set depsWarmed='skipped' and note later stages should install on demand.
-   - These node_modules stay gitignored — confirm \`git -C <worktreePath> status\` is still clean afterward.
-8. Check whether the repo ships its own PR skill: test for the file \`<worktreePath>/.claude/skills/pr/SKILL.md\`. Set hasPrSkill=true if it exists, else false.
+步骤:
+1. cd ${REPO}。运行 \`git fetch origin --prune\`（离线则忽略失败）。确定最新的基线 ref：若 \`origin/${BASE}\` 存在则优先用它，否则用本地 \`${BASE}\`。
+2. 选定功能分支名（给了就用，否则派生如 feat/<slug> 或 fix/<slug>）。确认它不存在（需要时加 -2 等）。
+3. 在主检出之外选一个 worktree 路径：同级目录如 \`<repo>-worktrees/<branch-slug>\`（需要时创建父目录）。避免嵌套在仓库内。
+4. 创建它: \`git -C ${REPO} worktree add <worktreePath> -b <branch> <baseRef>\`。
+5. 验证: worktree 路径存在、\`git -C <worktreePath> rev-parse --abbrev-ref HEAD\` 显示新分支、\`git -C <worktreePath> status\` 是干净的。
+6. **携带 gitignored 的本地 env 文件。** \`git worktree add\` 只填充版本控制下的文件，所以全新 worktree 没有 \`.env\` 文件、应用起不来 —— 这会默默阻塞后续验证。把基检出的 ignored env 文件复制进 worktree，保留相对路径：
+   - 列出 ignored 文件: \`git -C ${REPO} ls-files --others --ignored --exclude-standard\`。
+   - 只保留 env 文件 —— basename 匹配 \`.env\` 或 \`.env.*\`（例如 \`.env\`、\`.env.local\`、\`.env.development\`）。用 \`grep -E '(^|/)\\.env(\\.[^/]+)?$'\` 过滤。不要复制 node_modules/dist/build/cache 产物。
+   - 对每个匹配 \`<rel>\`: \`mkdir -p "<worktreePath>/$(dirname <rel>)"\` 然后 \`cp "${REPO}/<rel>" "<worktreePath>/<rel>"\`。它们在 worktree 里仍是 gitignored —— 确认没有出现在 \`git -C <worktreePath> status\` 里。
+   - 把复制的相对路径记入 \`envFilesCopied\`（仓库没有则为空数组 —— 没关系）。
+7. **预热 worktree 的依赖**，让后续阶段（Implement/Simplify/Review/Verify）能跑 typecheck/lint/tests。全新 worktree 没有 \`node_modules\`。把 \`depsWarmed\` 设为你走的路径。（此步偏 JS/Node；按仓库生态适配 —— 非 Node 仓库则设 depsWarmed='none'，让后续阶段按需准备环境。）
+   - 若 \`${REPO}/node_modules\` 不存在，设 depsWarmed='none' 并跳过（没东西可预热；后续阶段按需安装）。
+   - **快路径（clone）—— 优先。** 仅当同时满足才有效：(a) 基检出是 APFS（macOS）—— 直接尝试 clone，出错则回退；且 (b) worktree 的 lockfile 与基线一致: \`diff -q "${REPO}/pnpm-lock.yaml" "<worktreePath>/pnpm-lock.yaml"\` 相同（用存在的那个 lockfile：pnpm-lock.yaml / package-lock.json / yarn.lock；都没有则跳过 clone）。有效时：通过 \`cd ${REPO} && find . -type d -name node_modules -prune | grep -v '/node_modules/'\` 枚举顶层 node_modules 目录（根 + 每个 workspace package；不含嵌套的 .pnpm）。对每个 \`<rel>\`: \`mkdir -p "<worktreePath>/$(dirname <rel>)"\` 然后 \`cp -c -R "${REPO}/<rel>" "<worktreePath>/<rel>"\`（\`-c\` = APFS clonefile，写时复制，近乎瞬时、无额外磁盘；pnpm 用相对 symlink，所以 clone 在新路径下可解析）。若 \`cp -c\` 报错（非 APFS/跨卷），放弃 clone → 回退。成功则设 depsWarmed='clone'。
+   - **回退（install）。** 若 clone 不可行/失败但基检出有 node_modules: \`cd <worktreePath> && pnpm install --prefer-offline\`（或匹配 lockfile 的 npm ci / yarn —— 全局 store 已暖，所以基本是 link）。设 depsWarmed='install'。若 install 太重不值得，则设 depsWarmed='skipped' 并注明后续阶段按需安装。
+   - 这些 node_modules 保持 gitignored —— 确认之后 \`git -C <worktreePath> status\` 仍干净。
+8. 检查仓库是否自带 PR skill: 测试文件 \`<worktreePath>/.claude/skills/pr/SKILL.md\` 是否存在。存在则 hasPrSkill=true，否则 false。
 
-Do NOT implement the task. Do NOT modify the user's original checkout (only READ from it for the env copy + node_modules clone). Return the worktree path, branch, the base ref you branched from, hasPrSkill, envFilesCopied, and depsWarmed.`,
+不要实现任务。不要修改用户的原始检出（仅从它读取以复制 env + clone node_modules）。返回 worktree 路径、分支、你分支出来的基线 ref、hasPrSkill、envFilesCopied、depsWarmed。`,
   { phase: 'Setup', schema: SETUP_SCHEMA }
 )
 
 if (!setup || !setup.worktreePath) {
-  log('Setup failed to create a worktree — aborting.')
+  log('Setup 未能创建 worktree —— 中止。')
   return { setup, aborted: true }
 }
 const WT = setup.worktreePath
 const BRANCH = setup.branch
-log(`Worktree ready: ${WT} (branch ${BRANCH} off ${setup.baseRef})`)
+log(`Worktree 就绪: ${WT}（分支 ${BRANCH}，基于 ${setup.baseRef}）`)
 const envCopied = setup.envFilesCopied || []
 log(
   envCopied.length
-    ? `Carried ${envCopied.length} gitignored env file(s) into the worktree: ${envCopied.join(', ')}`
-    : 'No gitignored env files to carry over (or repo has none).'
+    ? `已携带 ${envCopied.length} 个 gitignored env 文件进 worktree: ${envCopied.join(', ')}`
+    : '没有需要携带的 gitignored env 文件（或仓库没有）。'
 )
 const depsWarmed = setup.depsWarmed || 'none'
 log(
   {
-    clone: 'Dependencies warmed via APFS clone (node_modules copy-on-write from base checkout) — typecheck/tests runnable.',
-    install: 'Dependencies warmed via package-manager install in the worktree — typecheck/tests runnable.',
-    skipped: 'Dependency warm-up skipped — later stages install on demand before typecheck/tests.',
-    none: 'No dependencies to warm (base checkout has no node_modules / non-Node repo).',
-  }[depsWarmed] || `Dependency warm-up: ${depsWarmed}.`
+    clone: '依赖已通过 APFS clone 预热（node_modules 从基检出写时复制）—— typecheck/tests 可运行。',
+    install: '依赖已通过在 worktree 内包管理器 install 预热 —— typecheck/tests 可运行。',
+    skipped: '依赖预热已跳过 —— 后续阶段在 typecheck/tests 前按需安装。',
+    none: '无可预热的依赖（基检出无 node_modules / 非 Node 仓库）。',
+  }[depsWarmed] || `依赖预热: ${depsWarmed}.`
 )
 
-// All later phases operate inside the worktree (WT), never the original ${REPO} checkout.
+// 所有后续阶段都在 worktree（WT）内进行，绝不在原始 ${REPO} 检出内。
 
 // ───────────────────────── Phase 1: Implement ─────────────────────────
 phase('Implement')
@@ -116,26 +116,26 @@ const IMPL_SCHEMA = {
   },
 }
 const impl = await agent(
-  `Implement the following task. Work ONLY inside the worktree at ${WT} (branch ${BRANCH}). Do NOT touch any other checkout. Do NOT git commit — a later stage commits once.
+  `实现以下任务。只在 worktree ${WT}（分支 ${BRANCH}）内工作。不要碰任何其他检出。不要 git commit —— 后续阶段会统一提交一次。
 
 TASK:
 """
 ${TASK}
 """
 
-Approach:
-- Investigate first: read the relevant code, types, and call sites in ${WT} before editing. Confirm signatures/field names against the actual source — don't assume.
-- Make the change focused and idiomatic — match the surrounding code's conventions, naming, and comment density.
-- Prefer putting new pure/testable logic in its own module (free of framework/runtime-specific imports) and wiring it in, so it can be unit-tested in isolation.
-- Add or update tests for the new behavior where the repo has a test setup.
-- Respect any scope / out-of-scope boundaries stated in the task. Do not gold-plate. Leave a brief code comment for any deliberately deferred follow-up.
-- Sanity-check types/build on the changed area if it's fast (don't block on a slow full build).
-- Dependencies were pre-warmed in Setup (depsWarmed=${depsWarmed}), so they should already be present — typecheck/tests are runnable without installing. If you ADD or CHANGE a dependency, run the repo's install yourself; the global package store is warm so it's fast. If depsWarmed is 'skipped'/'none' and you need to typecheck/test, set up the environment first.
+方法:
+- 先调研：编辑前先读 ${WT} 里相关代码、类型和调用点。对照实际源码确认签名/字段名 —— 不要假设。
+- 变更聚焦且地道 —— 匹配周围代码的约定、命名和注释密度。
+- 优先把新的纯/可测逻辑放进它自己的模块（不含框架/运行时特定 import）再接线进去，以便单独单测。
+- 在仓库有测试设置的地方为新行为添加或更新测试。
+- 尊重任务里声明的任何范围 / 超出范围边界。不要镀金。对任何刻意延后的后续项留一段简短代码注释。
+- 改动区域若 type-check/build 很快，做一次健全性检查（不要被慢的全量 build 阻塞）。
+- 依赖已在 Setup 阶段预热（depsWarmed=${depsWarmed}），所以应已就位 —— 无需安装即可跑 typecheck/tests。如果你新增或改动了依赖，自己跑仓库的 install；全局包 store 已暖，所以很快。若 depsWarmed 为 'skipped'/'none' 且你需要 typecheck/test，先准备环境。
 
-Return: files changed, a concise summary, key decisions, and any open concerns for downstream review.`,
+返回：改动的文件、简明摘要、关键决策、以及给下游 review 的任何开放疑虑。`,
   { phase: 'Implement', schema: IMPL_SCHEMA }
 )
-log(`Implement: ${impl?.filesChanged?.length ?? 0} file(s) changed`)
+log(`Implement: 改动 ${impl?.filesChanged?.length ?? 0} 个文件`)
 
 // ───────────────────────── Phase 2: Simplify ─────────────────────────
 phase('Simplify')
@@ -148,19 +148,19 @@ const SIMP_SCHEMA = {
   },
 }
 const simp = await agent(
-  `Quality pass — SIMPLIFY ONLY (do not hunt for bugs, do not change behavior, do not expand scope) — over the uncommitted changes in the worktree ${WT} (branch ${BRANCH}).
+  `质量 pass —— 只做简化（不要找 bug、不要改行为、不要扩范围）—— 针对 worktree ${WT}（分支 ${BRANCH}）中未提交的改动。
 
-What was just implemented:
+刚实现的内容:
 ${JSON.stringify(impl, null, 2)}
 
-Run \`cd ${WT} && git --no-pager diff\` to see the exact changes, then improve ONLY the changed code for: reuse/dedup, simplification & readability, efficiency, and correct altitude (logic in the right module; entrypoints stay thin). Keep behavior identical. Do not commit. Apply edits directly and return what you changed.`,
+运行 \`cd ${WT} && git --no-pager diff\` 查看精确改动，然后只针对改动代码改进：复用/去重、简化与可读性、效率、以及正确的层次（逻辑在合适的模块；入口保持精简）。保持行为一致。不要提交。直接应用编辑并返回你改了什么。`,
   { phase: 'Simplify', schema: SIMP_SCHEMA }
 )
-log(`Simplify: ${simp?.changesMade?.length ?? 0} cleanup(s)`)
+log(`Simplify: ${simp?.changesMade?.length ?? 0} 项清理`)
 
 // ───────────────────────── Phase 3: Review + Fix ─────────────────────────
-// Uses Codex for an independent second opinion when available; otherwise the agent
-// does a rigorous blocking-issue review itself. Either way it fixes what it confirms.
+// 可用时用 Codex 取独立第二意见；否则 agent 自己做严格的阻塞问题
+// review。无论哪种，它都修掉自己确认的问题。
 let review = null
 if (RUN_REVIEW) {
   phase('Review')
@@ -186,31 +186,31 @@ if (RUN_REVIEW) {
     },
   }
   review = await agent(
-    `Review the uncommitted diff in the worktree ${WT} (branch ${BRANCH}) for BLOCKING issues only, then fix them.
+    `Review worktree ${WT}（分支 ${BRANCH}）中未提交 diff 的阻塞性问题，然后修复它们。
 
-Steps:
-1. \`cd ${WT} && git --no-pager diff\` to capture the change set.
-2. Review the diff for BLOCKING problems — things that would break production or fail review: correctness bugs, runtime/environment incompatibilities, security holes (injection/escaping/authz), regressions to existing behavior, pathological regex/perf, and type errors. Ignore pure style nits (Simplify already ran).
-   - If a Codex CLI/MCP is available and authenticated, run it on the diff for an independent second opinion and fold its findings in. Set usedCodex=true.
-   - If Codex is unavailable/unauthenticated, do the review yourself — just as rigorously. Set usedCodex=false.
-3. FIX every blocking issue you can confirm is real (edit files directly in ${WT}). Do NOT commit. Do NOT expand scope.
+步骤:
+1. \`cd ${WT} && git --no-pager diff\` 捕获变更集。
+2. Review diff 找阻塞性问题 —— 会搞坏生产或过不了 review 的东西：正确性 bug、运行时/环境不兼容、安全漏洞（注入/转义/authz）、对现有行为的回归、病态正则/性能、以及类型错误。忽略纯风格细枝末节（Simplify 已跑过）。
+   - 如果有可用且已认证的 Codex CLI/MCP，在 diff 上跑它取独立第二意见并合并其发现。设 usedCodex=true。
+   - 如果 Codex 不可用/未认证，你自己做 review —— 同样严格。设 usedCodex=false。
+3. 修掉每一个你能确认为真的阻塞问题（直接在 ${WT} 里编辑文件）。不要提交。不要扩范围。
 
-Return the structured result (usedCodex, the blocking issues with whether each was fixed, the fixes applied, and a one-line verdict).`,
+返回结构化结果（usedCodex、每个阻塞问题及其是否已修、应用的修复、以及一行结论）。`,
     { phase: 'Review', schema: REVIEW_SCHEMA }
   )
   log(
-    `Review: usedCodex=${review?.usedCodex}, ${review?.blockingIssues?.length ?? 0} blocking issue(s)`
+    `Review: usedCodex=${review?.usedCodex}，${review?.blockingIssues?.length ?? 0} 个阻塞问题`
   )
 } else {
-  log('Review skipped (runReview=false).')
+  log('Review 已跳过（runReview=false）。')
 }
 
-// Delegate the verify+ship flow to the target repo's own /pr skill when it has one.
-// That skill runs its own (heavier, app-driving) verification + regression sweep and
-// only opens a PR once the feature is proven — so we skip this workflow's Verify phase.
+// 当目标仓库自带 /pr skill 时，把验证+交付流程委派给它。
+// 该 skill 跑它自己更重的（驱动应用的）验证 + 回归扫描，并
+// 仅在功能被证明后开 PR —— 因此跳过本 workflow 的 Verify 阶段。
 const USE_PR_SKILL = OPEN_PR && !!setup.hasPrSkill
 if (USE_PR_SKILL) {
-  log('Found a /pr skill in the worktree — delegating verification + PR to it (skipping this workflow\'s own Verify phase).')
+  log('在 worktree 中发现 /pr skill —— 把验证 + PR 委派给它（跳过本 workflow 自己的 Verify 阶段）。')
 }
 
 // ───────────────────────── Phase 4: Verify ─────────────────────────
@@ -238,24 +238,24 @@ if (!USE_PR_SKILL) {
     },
   }
   verify = await agent(
-    `Locally verify the uncommitted changes in the worktree ${WT} (branch ${BRANCH}). Be rigorous and HONEST — report real command output; never claim success you didn't observe.
+    `本地验证 worktree ${WT}（分支 ${BRANCH}）中未提交的改动。要严格且诚实 —— 报告真实命令输出；绝不声称你没观察到的成功。
 
-${VERIFY_HINTS ? `Verification hints from the requester: ${VERIFY_HINTS}\n` : ''}Steps:
-1. Discover the right commands from the repo (package.json/turbo.json/Makefile/etc.). Prefer SCOPED, fast checks over full builds: type-check, lint on changed files, and the unit/integration tests that cover the changed code.
-2. Run them; capture pass/fail + key output for each.
-3. If something fails due to a real defect in the new code, apply a MINIMAL fix and re-run (a few iterations max). Do not expand scope. Do not commit.
-4. Honestly list under couldNotVerify anything that can't be checked locally (e.g. real production runtime, external services, manual UX).
+${VERIFY_HINTS ? `来自请求者的验证提示: ${VERIFY_HINTS}\n` : ''}步骤:
+1. 从仓库发现正确命令（package.json/turbo.json/Makefile 等）。优先 SCOPED、快速的检查而非全量 build：type-check、改动文件的 lint、以及覆盖改动代码的单元/集成测试。
+2. 跑它们；捕获每个的通过/失败 + 关键输出。
+3. 如果因新代码的真实缺陷而失败，应用最小修复并重跑（最多几轮）。不要扩范围。不要提交。
+4. 诚实列出不能在本地检查的东西（如真实生产运行时、外部服务、手动 UX），放入 couldNotVerify。
 
-Set passed=true ONLY if the relevant checks for the changed code pass. Return the actual commands you ran.`,
+只有当改动代码的相关检查通过时才设 passed=true。返回你实际跑过的命令。`,
     { phase: 'Verify', schema: VERIFY_SCHEMA }
   )
   log(`Verify: passed=${verify?.passed}`)
 }
 
 // ───────────────────────── Phase 5: PR ─────────────────────────
-// Delegated path (USE_PR_SKILL): commit, then hand off to the repo's /pr skill, which
-// verifies the feature and runs the regression sweep before it opens the PR.
-// Inline path: open the PR only after this workflow's own Verify passed.
+// 委派路径（USE_PR_SKILL）：提交，然后交给仓库的 /pr skill，它在
+// 开 PR 之前验证功能并跑回归扫描。
+// 内联路径：仅在本 workflow 自己的 Verify 通过后开 PR。
 const PR_SCHEMA = {
   type: 'object',
   required: ['prUrl', 'branch', 'summary'],
@@ -268,43 +268,43 @@ const PR_SCHEMA = {
 }
 let pr = null
 if (!OPEN_PR) {
-  log(`openPr=false — stopping after verify. Changes are in the worktree ${WT} (branch ${BRANCH}), uncommitted.`)
+  log(`openPr=false —— 在 verify 后停下。改动在 worktree ${WT}（分支 ${BRANCH}）内，未提交。`)
 } else if (USE_PR_SKILL) {
   phase('PR')
   pr = await agent(
-    `Commit the change, then run THIS repo's own /pr skill to verify-and-ship. Work in the worktree ${WT} (branch ${BRANCH}, base ${BASE}).
+    `提交变更，然后运行本仓库自带的 /pr skill 来验证并交付。在 worktree ${WT}（分支 ${BRANCH}，基线 ${BASE}）内工作。
 
-The /pr skill requires the change to be committed on a branch first, and it independently verifies the feature (a verifier sub-agent drives the running app) and runs the regression sweep BEFORE opening a PR. Do NOT open a PR yourself ahead of that — let the skill gate it.
+/pr skill 要求变更先提交到一个分支上，然后它独立验证功能（一个 verifier 子 agent 驱动运行中的应用）并在开 PR 之前跑回归扫描。不要抢在它之前自己开 PR —— 让 skill 把关。
 
-Steps:
-1. cd ${WT}; review \`git status\` and \`git --no-pager diff\` so the commit includes only the intended files (no stray/unrelated files).
-2. git add the intended files; commit with a clear Conventional Commit message that summarizes the change and notes any deliberate follow-ups/out-of-scope items.
-3. Read \`${WT}/.claude/skills/pr/SKILL.md\` and follow its procedure EXACTLY (bring up the stack, delegate feature verification, regression sweep, then open the PR with proof). Run everything from inside ${WT}.${VERIFY_HINTS ? `\n   Verification hints from the requester to feed the verifier: ${VERIFY_HINTS}` : ''}
-4. Return the PR URL, branch, and short commit sha.
+步骤:
+1. cd ${WT}；查看 \`git status\` 和 \`git --no-pager diff\`，确保提交只含目标文件（无杂散/无关文件）。
+2. git add 目标文件；用清晰的约定式提交信息提交，概述变更并注明任何刻意的后续项/超出范围项。
+3. 读 \`${WT}/.claude/skills/pr/SKILL.md\` 并严格按其流程执行（起栈、委派功能验证、回归扫描、然后带证据开 PR）。全部在 ${WT} 内运行。${VERIFY_HINTS ? `\n   给 verifier 的、来自请求者的验证提示: ${VERIFY_HINTS}` : ''}
+4. 返回 PR URL、分支、以及短 commit sha。
 
-If the skill's verification does not pass within its retry cap, or git push / gh fails (auth/permissions), do NOT force anything — return prUrl='' with the verdict/failure reason in summary so the human can finish it.`,
+如果 skill 的验证在其重试上限内未通过，或 git push / gh 失败（认证/权限），不要强推 —— 返回 prUrl='' 并在 summary 里写明结论/失败原因，让人类来收尾。`,
     { phase: 'PR', schema: PR_SCHEMA }
   )
-  log(pr?.prUrl ? `PR opened: ${pr.prUrl}` : `PR not opened: ${pr?.summary ?? 'unknown'}`)
+  log(pr?.prUrl ? `PR 已开: ${pr.prUrl}` : `PR 未开: ${pr?.summary ?? '未知'}`)
 } else if (verify && verify.passed) {
   phase('PR')
   pr = await agent(
-    `Commit the verified changes and open a PR. Work in the worktree ${WT} (branch ${BRANCH}, base ${BASE}).
+    `提交已验证的改动并开 PR。在 worktree ${WT}（分支 ${BRANCH}，基线 ${BASE}）内工作。
 
-Steps:
-1. cd ${WT}; review \`git status\` and \`git --no-pager diff\` so the commit includes only the intended files (no stray/unrelated files).
-2. git add the intended files; commit with a clear Conventional Commit message that summarizes the change and notes any deliberate follow-ups/out-of-scope items.
-3. git push -u origin ${BRANCH}.
-4. Open the PR: \`gh pr create --base ${BASE} --head ${BRANCH}\` with a clear title and a body covering: what & why, the verification performed, and explicit out-of-scope/follow-ups.
-5. Return the PR URL, branch, and short commit sha.
+步骤:
+1. cd ${WT}；查看 \`git status\` 和 \`git --no-pager diff\`，确保提交只含目标文件（无杂散/无关文件）。
+2. git add 目标文件；用清晰的约定式提交信息提交，概述变更并注明任何刻意的后续项/超出范围项。
+3. git push -u origin ${BRANCH}。
+4. 开 PR: \`gh pr create --base ${BASE} --head ${BRANCH}\`，带清晰标题和正文，覆盖：做了什么及为什么、执行的验证、以及明确的超出范围/后续项。
+5. 返回 PR URL、分支、以及短 commit sha。
 
-If git push or gh fails (auth/permissions), do NOT force anything — return prUrl='' with the failure reason in summary so the human can finish it.`,
+如果 git push 或 gh 失败（认证/权限），不要强推 —— 返回 prUrl='' 并在 summary 里写明失败原因，让人类来收尾。`,
     { phase: 'PR', schema: PR_SCHEMA }
   )
-  log(pr?.prUrl ? `PR opened: ${pr.prUrl}` : `PR not opened: ${pr?.summary ?? 'unknown'}`)
+  log(pr?.prUrl ? `PR 已开: ${pr.prUrl}` : `PR 未开: ${pr?.summary ?? '未知'}`)
 } else {
   log(
-    `Verification did NOT pass — skipping commit/PR. Changes remain in the worktree ${WT} (branch ${BRANCH}) for human review.`
+    `验证未通过 —— 跳过提交/PR。改动留在 worktree ${WT}（分支 ${BRANCH}）供人类 review。`
   )
 }
 

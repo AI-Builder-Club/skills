@@ -1,64 +1,63 @@
 ---
 name: e2e-setup
 description: >
-  Set up an end-to-end test suite in any repo, following practices that make e2e a
-  reliable per-PR gate: real flows over bypass, layered assertions, a reusable
-  auth/session helper, video+trace evidence, and a compounding suite. Use when a
-  repo has no e2e (or weak e2e) and you want system-level tests — "set up e2e",
-  "add end-to-end tests", "scaffold a test gate".
+  在任意仓库搭建端到端测试套件，遵循让 e2e 成为可靠 per-PR 门禁的实践：真实流程优于
+  旁路、分层断言、可复用的 auth/session helper、视频+trace 证据、以及会复利的套件。当仓库没有
+  e2e（或 e2e 很弱）而你想要系统级测试时使用 —— "搭建 e2e"、
+  "加端到端测试"、"脚手架生成一个测试门禁"。
 user_invocable: true
 ---
 
-# Set up an e2e test suite
+# 搭建 e2e 测试套件
 
-E2e tests verify the whole running system *through the app* (browser/API), not one
-module. They are the per-PR gate. Pairs with `dev-local-setup` (a reproducible
-local stack) and `pr` (the verify→ship loop).
+E2e 测试*通过应用*（浏览器/API）验证整个运行中的系统，而不是某一个
+模块。它们是 per-PR 的门禁。与 `dev-local-setup`（可复现的
+本地栈）和 `pr`（验证→交付循环）配对。
 
-## Where it lives
-- **Unit/integration tests** stay inside each app/package — they own one module.
-- **System e2e** is a dedicated top-level package (e.g. `e2e/`) — it spans all
-  apps, so it belongs to none. Add it to the workspace if a monorepo.
+## 它放在哪
+- **单元/集成测试**留在每个 app/package 内部 —— 它们拥有一个模块。
+- **系统 e2e** 是一个独立的顶层 package（例如 `e2e/`）—— 它横跨所有
+  app，因此不属于任何一个。monorepo 则加入 workspace。
 
-## The recipe
-1. Stand the app up reproducibly — see `dev-local-setup`. The e2e suite **never
-   boots the app itself**; it runs against the already-running stack.
-2. Pick the framework that fits (Playwright for browser; your HTTP client for API).
-   Turn on **video + trace** — the recording is the proof, and it's gitignored output.
-3. **Explore the flow live first** (don't guess selectors), then crystallize it into
-   a committed spec.
-4. Keep the gate **small**: a handful of critical journeys, deterministic. Each new
-   feature PR adds its spec — the suite compounds.
+## 配方
+1. 可复现地把应用立起来 —— 见 `dev-local-setup`。e2e 套件**绝不
+   自己启动应用**；它跑在已经起来的栈上。
+2. 选合适的框架（浏览器用 Playwright；API 用你的 HTTP client）。
+   打开 **video + trace** —— 录像是证据，且它是 gitignored 输出。
+3. **先实时探查流程**（不要猜选择器），再把它固化成一份
+   已提交的 spec。
+4. 让门禁**小**：少数关键旅程，确定性。每个新
+   功能 PR 加它的 spec —— 套件复利增长。
 
-## Practices that make e2e trustworthy
-- **Real flow, not bypass.** Drive the genuine path. For email codes / OTP, read the
-  real code from a local mail server (Mailpit / Inbucket / MailHog) — never hardcode
-  a fixed test code. That's what makes it a test, not a rehearsal.
-- **Verify auth ITSELF once; bypass it everywhere else.** A dedicated signup/login
-  spec proves auth works. Every *other* spec shouldn't re-pay the login tax — build
-  a **session helper** that mints an authed state once (real flow → saved storage
-  state, or a service-role/token mint) and load it.
-- **Layered assertions: client → server → product.** Don't stop at "the UI changed."
-  Confirm the server agrees (token validates / row/state is right) AND the
-  user-visible outcome (e.g. plan upgraded *and* credits granted).
-- **Stable selectors.** Prefer role/label/text; add a small `data-testid` in the
-  component when there's no good handle — never a brittle CSS path.
-- **Fresh data per run.** Unique emails/ids so reruns don't collide; mind rate
-  limits (auth email, etc.).
-- **Commit specs + helpers, never `test-results/`** (generated output).
+## 让 e2e 值得信赖的实践
+- **真实流程，不走旁路。** 驱动真正的路径。邮件验证码 / OTP，从
+   本地邮件服务器（Mailpit / Inbucket / MailHog）读真实
+   验证码 —— 绝不硬编码固定测试码。这才是它成为测试而非彩排的原因。
+- **验证 auth 本身一次；其他处处旁路它。** 一个专门的 signup/login
+   spec 证明 auth 可用。每个*其他* spec 不该再付一次登录税 —— 建一个
+   **session helper**，一次 mint 出已认证状态（真实流程 → 保存的 storage
+   state，或一个 service-role/token mint）并加载。
+- **分层断言：client → server → product。** 别停在"UI 变了"。
+   确认服务端也一致（token 校验通过 / 行/状态正确）以及
+   用户可见结果（例如套餐升级*且*积分到账）。
+- **稳定选择器。** 优先 role/label/text；没有好抓手时在
+   组件里加一个 `data-testid` —— 绝不用脆弱的 CSS 路径。
+- **每次运行用全新数据。** 唯一 email/id 让重跑不冲突；注意
+   速率限制（auth 邮件等）。
+- **提交 spec + helper，绝不提交 `test-results/`**（生成输出）。
 
-## When a test fails: triage before "fixing"
-A red e2e is information. Classify first:
-- **Real bug** — the product broke. Fix the code; the test did its job.
-- **Stale test** — the flow intentionally changed (renamed route, new step). Update
-  the test to match the new contract.
-- **Flaky / env** — stack down, timing, rate limit, stale data. Fix robustness/env.
+## 测试失败时：先 triage 再"修"
+一条红的 e2e 是信息。先分类：
+- **真 bug** —— 产品坏了。修代码；测试尽到了职责。
+- **过时测试** —— 流程有意改了（重命名路由、新增步骤）。更新
+   测试以匹配新契约。
+- **Flaky / 环境** —— 栈没起、时序、速率限制、陈旧数据。修健壮性/环境。
 
-**Never weaken or delete an assertion just to go green.** Loosening is only correct
-when the *intended contract* changed — confirmed from the diff, not assumed.
+**绝不为变绿而削弱或删除断言。** 只有当*有意契约*变了时放松才正确
+—— 从 diff 确认，而非假设。
 
-## External services (payments, email, 3rd-party)
-Use the vendor's **test/sandbox mode**, never live keys — and **guard hard**: the
-test should refuse to run if it detects a live key/credential. If a webhook
-completes the flow, forward it locally (e.g. the vendor's CLI listener) so the e2e
-exercises the real fulfilment path, not a faked event.
+## 外部服务（支付、邮件、第三方）
+用厂商的**测试/沙箱模式**，绝不用 live key —— 而且**严防**：如果
+测试检测到 live key/凭据就应拒绝运行。如果一个 webhook
+完成流程，就把它转发到本地（例如厂商的 CLI listener），让 e2e
+演练真实的履约路径，而非伪造事件。
