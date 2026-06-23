@@ -1,3 +1,5 @@
+[![Become a Top 1% AI Builder — AI Builder Club](assets/banner.png)](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=aibc-skills)
+
 # AI Builder Club — Skills
 
 A Claude Code **plugin marketplace** of the skills we share at
