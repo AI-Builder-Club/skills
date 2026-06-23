@@ -57,22 +57,33 @@ loop-engineer/                     a Claude Code plugin (skills, no runtime file
 
 ## Quickstart
 
-1. **Install the plugin.** Add this repo via the Claude Code plugin system
-   (`/plugin marketplace add AI-Builder-Club/loop-engineer-template`, then
-   `/plugin install loop-engineer`), or clone it and point your plugin config at it.
-2. **Bootstrap your knowledge base + first loop.** In the repo where your agent's memory should
-   live, run `/new-loop` and tell it the loop's name, goal, and what it does. On first run it sets
-   up the knowledge base (and your `CLAUDE.md`); then it scaffolds `domains/<loop>/README.md`, does
-   one real test run, and logs it.
-3. **Fill in your `CLAUDE.md`.** `/new-loop` adds the knowledge-base section (or scaffolds a full
-   `CLAUDE.md` from `references/CLAUDE.template.md` if you have none) — replace any `{{PLACEHOLDER}}`s.
-   This is the context the agent reads every session, so it's the highest-leverage step.
-4. **Harness the repo your loop ships into.** Run `/setup-codebase-harness` in that code repo so the
-   agent can run, test, and verify its own work. For **parallel** loops shipping code at once, add
-   `/crabbox-setup` (each agent gets its own isolated cloud stack).
-5. **Let it run.** Each session the agent reads `CLAUDE.md` + the relevant domain README, does work,
-   writes artifacts, and appends to `LOG.md`. For code changes it drives `ship-change` and ships
-   via `/pr`.
+**Install the plugin** — via the Claude Code plugin system
+(`/plugin marketplace add AI-Builder-Club/loop-engineer-template`, then
+`/plugin install loop-engineer`), or clone it and point your plugin config at it.
+
+Then there are **two entry points**:
+
+### 1. `/new-loop` — build your shared brain
+Run it in the repo where your agent's memory lives. First run **bootstraps the knowledge base**
+(creates `ARCHITECTURE.md`, `LOG.md`, the `signals/ docs/ domains/` folders, and a knowledge-base
+section in your `CLAUDE.md`); then it scaffolds the loop, does one real test run, and logs it.
+Run it again any time to add another loop. *(You're then live — each session the agent reads
+`CLAUDE.md` + the loop's README, works, writes artifacts, appends to `LOG.md`.)*
+
+### 2. `/setup-codebase-harness` — make a code repo agent-ready
+Run it in the code repo your loops ship into, so an agent can run, test, and verify its own work.
+It orchestrates the harness skills below — pull in only what the repo needs.
+
+## The skills (when to use which)
+
+| Skill | Use it when… |
+|---|---|
+| **`new-loop`** | You want a new loop/workstream the agent owns (bootstraps the knowledge base on first run). |
+| **`setup-codebase-harness`** | Onboarding a repo to agent-driven dev — the master that orchestrates the four below. |
+| **`dev-local-setup`** | You need a one-command local dev stack (`scripts/dev-local.sh up`). |
+| **`e2e-setup`** | The repo has no (or weak) e2e — add a real per-PR test gate. |
+| **`crabbox-setup`** | Loops ship code **in parallel** — give each agent its own isolated cloud stack (one laptop can't run N). The cloud counterpart to dev-local. |
+| **`pr`** | A change is ready — a fresh sub-agent proves the feature works, then opens the PR with proof. |
 
 ## Requirements
 
