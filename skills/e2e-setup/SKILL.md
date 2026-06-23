@@ -22,7 +22,10 @@ local stack) and `pr` (the verify→ship loop).
 
 ## The recipe
 1. Stand the app up reproducibly — see `dev-local-setup`. The e2e suite **never
-   boots the app itself**; it runs against the already-running stack.
+   boots the app itself**; it runs against the already-running stack. That stack can
+   be **local** (`dev-local-setup`) **or an isolated cloud box** (`crabbox-setup`) —
+   same specs, run against either. For **parallel agents** use the cloud box (one
+   laptop can't host concurrent stacks).
 2. Pick the framework that fits (Playwright for browser; your HTTP client for API).
    Turn on **video + trace** — the recording is the proof, and it's gitignored output.
 3. **Explore the flow live first** (don't guess selectors), then crystallize it into

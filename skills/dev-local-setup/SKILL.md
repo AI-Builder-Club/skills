@@ -20,6 +20,10 @@ so it's discoverable later.
 Do NOT start any dev servers yourself. You are *generating* the launcher, not
 running it. Build it, syntax-check it, then hand it to the user to run.
 
+> This is the **local, single-stack** launcher. For **concurrent agents** that each
+> need their own isolated stack (one laptop can't run N), see `crabbox-setup` — the
+> cloud counterpart. It reuses this script's service/port discovery, so set this up first.
+
 ## Step 1 — Investigate the repo (don't guess)
 
 Discover the real facts before writing anything:

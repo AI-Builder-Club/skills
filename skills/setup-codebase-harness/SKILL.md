@@ -24,7 +24,7 @@ ask *"what capability is missing, and how do I make it legible and enforceable?"
 and add it.
 
 This skill orchestrates the focused sub-skills: **`dev-local-setup`**,
-**`e2e-setup`**, **`pr`**.
+**`e2e-setup`**, **`crabbox-setup`** (cloud/parallel), and **`pr`**.
 
 ## 0. Assess
 
@@ -57,9 +57,13 @@ heads). Note what's missing per pillar below.
 - **`dev-local-setup`** → a one-command, reproducible local stack
   (`scripts/dev-local.sh up`) running every service + infra.
 - Make the app **drivable**: browser via the `playwright-cli` skill; logs reachable.
-- *Advanced:* boot the app **per git worktree** so parallel agents don't collide; a
-  local, ephemeral observability stack (queryable logs/metrics) for perf/reliability
-  prompts.
+- **`crabbox-setup`** → an **isolated cloud box per agent** — the parallel-safe
+  counterpart to dev-local. Reach for it when loops run **concurrently**: one laptop
+  can't host N full stacks (fixed ports, one Docker daemon, one DB), and per-worktree
+  local doesn't fix it — the worktrees still share the host. crabbox gives each agent
+  its own stack + an in-box browser, so parallel verification never collides.
+- *Advanced:* a local, ephemeral observability stack (queryable logs/metrics) for
+  perf/reliability prompts.
 
 ## 3. Verifiable — the agent can prove it works
 

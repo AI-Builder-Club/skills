@@ -1,0 +1,19 @@
+# .crabbox.yaml — copy to the repo ROOT as `.crabbox.yaml`
+provider: daytona
+target: linux
+daytona:
+  snapshot: CHANGE_ME-test        # EDIT: the snapshot name you built in Step 2
+  workRoot: /home/daytona/crabbox
+sync:
+  exclude:                        # EDIT: build/dep dirs for your stack
+    - node_modules
+    - .next
+    - dist
+    - build
+    - .turbo
+    - evidence                    # agent writes screenshots/video here on the box
+    - "**/.env"
+    - "**/.env.local"             # secrets are gitignored → forwarded via env.allow, NOT synced
+env:
+  allow:                          # EDIT: exact secret var names the app needs at runtime
+    - MY_API_KEY                  #   forwarded from your shell → box over encrypted SSH

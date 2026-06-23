@@ -1,0 +1,10 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": {
+      "channel": "chrome",
+      "headless": true,
+      "args": ["--no-sandbox", "--disable-dev-shm-usage"]
+    }
+  }
+}

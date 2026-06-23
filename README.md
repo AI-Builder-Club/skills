@@ -1,6 +1,6 @@
-# loop-engineer-template
+# loop-engineer
 
-A starter template for building **loop engineers**: agents that get triggered on their own,
+A Claude Code **plugin** for building **loop engineers**: agents that get triggered on their own,
 pick up work, ship it, verify it, and log what they learned, so the work compounds without you
 prompting every step. It's the productized version of the setup my team runs in production, and
 what I teach at [AI Builder Club](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template).
@@ -19,11 +19,13 @@ SEO loop. One shared brain, many loops.
 Building one comes down to four ingredients:
 
 1. **Triggers:** cron, webhook, an incident, or another agent wakes the loop at the right time.
-2. **A file + logging structure:** the shared memory loops read and write (this template).
+2. **A file + logging structure:** the shared memory loops read and write.
 3. **Tools & connectors:** so the agent can do real work (your skills/MCPs).
 4. **A codebase harness:** so the agent can run, test, and verify its own work autonomously.
 
-This repo gives you #2 and #4 out of the box, plus the scaffolding to add the rest.
+This plugin gives you **#2 and #4** — `/new-loop` scaffolds the knowledge base on demand, and the
+harness skills make any code repo agent-ready, including **an isolated cloud box per agent** so
+many loops can ship code *in parallel*.
 
 Want the full walkthrough of the concept and how my team designs compounding loops? Watch the video:
 
@@ -32,52 +34,58 @@ Want the full walkthrough of the concept and how my team designs compounding loo
 ## What's included
 
 ```
-loop-engineer-template/
-├── ARCHITECTURE.md          the knowledge-base model (read this once)
-├── CLAUDE.md                template for YOUR context: fill in the {{PLACEHOLDER}}s
-├── LOG.md                   global work log (one line per bulk of work)
-├── signals/  docs/  domains/  starter artifact + loop folders, each README IS its schema
-└── .claude/
-    ├── skills/
-    │   ├── new-loop/                 spin up a new loop (domain): scaffold, test-run, write its contract
-    │   ├── setup-codebase-harness/   the codebase harness: make any repo agent-ready
-    │   ├── dev-local-setup/            └ one-command dev stack
-    │   ├── e2e-setup/                  └ a real e2e test gate
-    │   └── pr/                         └ verify-before-ship (a fresh sub-agent proves it works, then opens the PR)
-    └── workflows/
-        └── ship-change.js           ship a scoped code change end-to-end (worktree → implement → review → verify → PR)
+loop-engineer/                     a Claude Code plugin (skills, no runtime files at root)
+├── .claude-plugin/plugin.json     plugin manifest (lists the skills below)
+└── skills/
+    ├── new-loop/                  spin up a loop (domain): bootstrap the KB if missing, scaffold,
+    │   └── references/              test-run, log it. KB model + setup live in references/:
+    │                                ARCHITECTURE.md · LOG.md · KNOWLEDGE_SETUP.md · CLAUDE.template.md
+    ├── setup-codebase-harness/    master: make any repo agent-ready (orchestrates the four below)
+    ├── dev-local-setup/             └ one-command local dev stack
+    ├── e2e-setup/                   └ a real e2e test gate
+    ├── crabbox-setup/               └ an isolated CLOUD box per agent (parallel-safe; crabbox/Daytona)
+    └── pr/                          └ verify-before-ship (a fresh sub-agent proves it, then opens the PR)
 ```
 
-- **The knowledge base** (`ARCHITECTURE.md`, `signals/ docs/ domains/`, `LOG.md`) is the shared
-  memory: artifacts filed by kind, domains as loops, every file with an append-only `## Timeline`.
-- **The codebase harness** (the skills under `.claude/skills/`) is what makes a code repo
-  *legible, executable, and verifiable* so loops can ship code without you babysitting them.
+- **The knowledge base** is the shared memory: artifacts filed by *kind* (`signals/`, `docs/`),
+  *domains* as loops, every file with an append-only `## Timeline`. It isn't shipped at the repo
+  root — **`/new-loop` materializes it into your repo** the first time you run it (copying in
+  `ARCHITECTURE.md` + `LOG.md`, creating the folders, and adding a knowledge-base section to your
+  `CLAUDE.md`). Idempotent: run it again and it just adds the new loop.
+- **The codebase harness** (the other skills) makes a code repo *legible, executable, and
+  verifiable* so loops can ship code without you babysitting them.
 
 ## Quickstart
 
-1. **Copy this folder** to wherever you want your agent's knowledge base to live.
-2. **Fill in `CLAUDE.md`:** replace every `{{PLACEHOLDER}}`. This is the context the agent reads
-   on every session, so it's the most important step.
-3. **Read `ARCHITECTURE.md`** so you and the agent share the same model. It's short.
-4. **Spin up your first loop.** In Claude Code: run `/new-loop`, then tell it the loop's name,
-   goal, and what it should do. It scaffolds `domains/<loop>/README.md`, does one real test run,
-   and logs it.
-5. **Harness the repo your loop ships into.** Run `/setup-codebase-harness` in that code repo so
-   the agent can run, test, and verify its own work.
-6. **Let it run.** Each session the agent reads `CLAUDE.md` + the relevant domain README, does
-   work, writes artifacts, and appends to `LOG.md`. For code changes it drives `ship-change.js`
-   and ships via `/pr`.
+1. **Install the plugin.** Add this repo via the Claude Code plugin system
+   (`/plugin marketplace add AI-Builder-Club/loop-engineer-template`, then
+   `/plugin install loop-engineer`), or clone it and point your plugin config at it.
+2. **Bootstrap your knowledge base + first loop.** In the repo where your agent's memory should
+   live, run `/new-loop` and tell it the loop's name, goal, and what it does. On first run it sets
+   up the knowledge base (and your `CLAUDE.md`); then it scaffolds `domains/<loop>/README.md`, does
+   one real test run, and logs it.
+3. **Fill in your `CLAUDE.md`.** `/new-loop` adds the knowledge-base section (or scaffolds a full
+   `CLAUDE.md` from `references/CLAUDE.template.md` if you have none) — replace any `{{PLACEHOLDER}}`s.
+   This is the context the agent reads every session, so it's the highest-leverage step.
+4. **Harness the repo your loop ships into.** Run `/setup-codebase-harness` in that code repo so the
+   agent can run, test, and verify its own work. For **parallel** loops shipping code at once, add
+   `/crabbox-setup` (each agent gets its own isolated cloud stack).
+5. **Let it run.** Each session the agent reads `CLAUDE.md` + the relevant domain README, does work,
+   writes artifacts, and appends to `LOG.md`. For code changes it drives `ship-change` and ships
+   via `/pr`.
 
 ## Requirements
 
-- [Claude Code](https://claude.com/claude-code) (the skills + workflow assume it).
-- `git`. That's the only hard dependency.
-- `ship-change.js` and the harness skills want the repo they ship into to be a git repo with a
-  working build/test setup. They use Codex for review if available, and degrade gracefully if not.
+- [Claude Code](https://claude.com/claude-code) (the skills assume it).
+- `git`. That's the only hard dependency for the knowledge base + harness.
+- The harness skills want the code repo they ship into to be a git repo with a working build/test
+  setup. They use Codex for review if available, and degrade gracefully if not.
+- `crabbox-setup` (optional, for parallel cloud boxes) needs the `crabbox` CLI + a provider
+  (Daytona: `daytona` CLI / `DAYTONA_API_KEY`).
 
 ## Go deeper
 
-This template gets you the structure. If you want to learn how to actually build agents and run
+This plugin gets you the structure. If you want to learn how to actually build agents and run
 compounding loops for your own business, that's what I go deep on inside
 **[AI Builder Club](https://www.aibuilderclub.com/lp/loop-engineer?utm_source=github&utm_campaign=loop-engineer-template)**:
 weekly live builder workshops, courses on production AI agents, AI coding beyond the basics, and
