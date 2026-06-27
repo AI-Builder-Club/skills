@@ -28,12 +28,13 @@ SEO loop. One shared brain, many loops.
 Building one comes down to four ingredients:
 
 1. **Triggers:** cron, webhook, an incident, or another agent wakes the loop at the right time.
-2. **A file + logging structure:** the shared memory loops read and write → the **`loops`** plugin.
+2. **A file + logging structure:** the shared memory loops read and write → the **`loops`** skills.
 3. **Tools & connectors:** so the agent can do real work (your skills/MCPs).
 4. **A codebase harness:** so the agent can run, test, and verify its own work → the
-   **`codebase-harness`** plugin.
+   **`codebase-harness`** skills.
 
-These plugins give you **#2 and #4**, plus the scaffolding to add the rest.
+This single **`skills`** plugin ships both sets — giving you **#2 and #4**, plus the
+scaffolding to add the rest.
 
 Want the full walkthrough of the concept and how my team designs compounding loops? Watch the video:
 
