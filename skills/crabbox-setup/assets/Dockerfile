@@ -40,8 +40,12 @@ RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 
 # ─── browser e2e (KEEP only if you drive the UI / take screenshots+video) ───
 # Google Chrome = the 'chrome' channel playwright-cli uses by default (NOT chromium).
-RUN npx --yes playwright@1.49.1 install --with-deps chrome \
- && npm install -g @playwright/cli@latest \
+# PIN both: a snapshot must be reproducible — @latest means a rebuild months from now
+# bakes a different (possibly-incompatible) CLI than the one you validated against.
+ARG PLAYWRIGHT_VERSION=1.49.1
+ARG PLAYWRIGHT_CLI_VERSION=0.1.14
+RUN npx --yes playwright@${PLAYWRIGHT_VERSION} install --with-deps chrome \
+ && npm install -g @playwright/cli@${PLAYWRIGHT_CLI_VERSION} \
  && playwright-cli --version
 # playwright's bundled ffmpeg — required for `playwright-cli video-start`.
 RUN node "$(npm root -g)/@playwright/cli/node_modules/playwright-core/cli.js" install ffmpeg
