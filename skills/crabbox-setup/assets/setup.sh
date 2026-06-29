@@ -13,7 +13,11 @@ cd "$(dirname "$0")"
 APP_PORT=3000                      # dev server port
 INSTALL_CMD="pnpm install"
 DEV_CMD="pnpm dev"
-MIGRATE_CMD="pnpm run db:reset"    # set to "" if no migrations
+MIGRATE_CMD="pnpm run db:migrate"  # runs on EVERY setup, incl. LOCALLY (see header) → keep it
+                                   # NON-destructive & idempotent; "" if none. Do NOT default this
+                                   # to a `db:reset`: it would wipe your local dev DB on every
+                                   # re-run. If a fresh box needs seed data, point this at an
+                                   # idempotent migrate-then-seed, not a destructive reset.
 NEEDS_DOCKER=1                     # 1 if you run containers (DB), else 0
 # ────────────────────────────────────────────────────────────────────────────
 
