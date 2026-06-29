@@ -49,7 +49,10 @@ heads). Note what's missing per pillar below.
   forbidden imports, file-size, structured logging). **Write the error message to
   inject the fix** ("X isn't allowed here — do Y") so the remediation lands in agent
   context. Wire them into the repo's linter + CI.
-- **c) (later) Keep docs honest.** A freshness / doc-gardening pass that flags docs
+- **c) Queryable code graph.** Index the repo with [`codebase-memory-mcp`](https://github.com/DeusData/codebase-memory-mcp)
+  so the agent traces callers, data flow, and architecture from a knowledge graph
+  instead of blind grepping — faster, more precise navigation on large codebases.
+- **d) (later) Keep docs honest.** A freshness / doc-gardening pass that flags docs
   that no longer match the code and opens fix-up PRs.
 
 ## 2. Executable — the agent can run & drive the app
