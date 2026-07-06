@@ -7,3 +7,13 @@
 
 # Local Claude Code state (keep skills/ + workflows/, ignore local settings)
 .claude/settings.local.json
+
+# Python (visual-flow-gif renderer)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Skill render output
+out/
+outputs/

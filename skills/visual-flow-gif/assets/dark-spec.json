@@ -1,0 +1,398 @@
+{
+  "canvas": {
+    "width": 1360,
+    "height": 900,
+    "fps": 20,
+    "frames": 48
+  },
+  "theme": {
+    "name": "dark"
+  },
+  "title": {
+    "text": "Support Ops",
+    "highlight": "Signal Loop",
+    "subtitle": "Turn repeated tickets into product action without losing context"
+  },
+  "nodes": [
+    {
+      "id": "queue-bg",
+      "type": "box",
+      "layer": "background",
+      "label": "",
+      "body": "",
+      "x": 54,
+      "y": 155,
+      "w": 310,
+      "h": 655,
+      "color": "green"
+    },
+    {
+      "id": "queue-title",
+      "type": "label",
+      "label": "Support Queue",
+      "x": 82,
+      "y": 182,
+      "w": 220,
+      "h": 34,
+      "size": 22,
+      "bold": true
+    },
+    {
+      "id": "intake",
+      "type": "box",
+      "label": "Intake",
+      "body": "tickets\nbugs\nfeature asks",
+      "x": 82,
+      "y": 240,
+      "w": 250,
+      "h": 115,
+      "label_h": 36,
+      "label_size": 20,
+      "body_size": 13,
+      "label_bold": true,
+      "color": "green"
+    },
+    {
+      "id": "triage",
+      "type": "box",
+      "label": "Triage",
+      "body": "group repeats\ncheck history\npick owner",
+      "x": 82,
+      "y": 410,
+      "w": 250,
+      "h": 125,
+      "label_h": 38,
+      "label_size": 20,
+      "body_size": 13,
+      "label_bold": true,
+      "color": "green"
+    },
+    {
+      "id": "reply",
+      "type": "box",
+      "label": "Reply",
+      "body": "answer user\nask for detail\nset expectation",
+      "x": 82,
+      "y": 600,
+      "w": 250,
+      "h": 128,
+      "label_h": 38,
+      "label_size": 20,
+      "body_size": 13,
+      "label_bold": true,
+      "color": "green"
+    },
+    {
+      "id": "signal-bg",
+      "type": "box",
+      "layer": "background",
+      "label": "",
+      "body": "",
+      "x": 405,
+      "y": 155,
+      "w": 510,
+      "h": 655,
+      "color": "purple"
+    },
+    {
+      "id": "signal-title",
+      "type": "label",
+      "label": "Signal Workbench",
+      "x": 520,
+      "y": 182,
+      "w": 270,
+      "h": 34,
+      "size": 23,
+      "bold": true
+    },
+    {
+      "id": "memory",
+      "type": "box",
+      "label": "Support Memory",
+      "body": "ticket pattern\ncustomer wording\nrepro notes\nowner decisions",
+      "x": 455,
+      "y": 250,
+      "w": 255,
+      "h": 165,
+      "label_h": 42,
+      "label_size": 19,
+      "body_size": 13,
+      "label_bold": true,
+      "color": "purple"
+    },
+    {
+      "id": "pattern",
+      "type": "box",
+      "label": "Pattern",
+      "body": "same ask\n3+ accounts\nrevenue impact",
+      "x": 610,
+      "y": 480,
+      "w": 225,
+      "h": 135,
+      "label_h": 38,
+      "label_size": 19,
+      "body_size": 12,
+      "label_bold": true,
+      "color": "purple"
+    },
+    {
+      "id": "decision",
+      "type": "diamond",
+      "label": "Act?",
+      "body": "ship or watch",
+      "x": 465,
+      "y": 535,
+      "w": 125,
+      "h": 125,
+      "label_size": 20,
+      "body_size": 12,
+      "label_bold": true,
+      "color": "green"
+    },
+    {
+      "id": "journal",
+      "type": "box",
+      "label": "Decision Log",
+      "body": "why now\nwho owns it\nnext check",
+      "x": 505,
+      "y": 700,
+      "w": 255,
+      "h": 82,
+      "label_h": 30,
+      "label_size": 17,
+      "body_size": 11,
+      "label_bold": true,
+      "color": "purple"
+    },
+    {
+      "id": "action-bg",
+      "type": "box",
+      "layer": "background",
+      "label": "",
+      "body": "",
+      "x": 955,
+      "y": 155,
+      "w": 350,
+      "h": 655,
+      "color": "blue"
+    },
+    {
+      "id": "action-title",
+      "type": "label",
+      "label": "Action Lane",
+      "x": 1042,
+      "y": 182,
+      "w": 200,
+      "h": 34,
+      "size": 23,
+      "bold": true
+    },
+    {
+      "id": "fix",
+      "type": "box",
+      "label": "Product Fix",
+      "body": "issue\nPR\ndoc update",
+      "x": 1000,
+      "y": 255,
+      "w": 260,
+      "h": 130,
+      "label_h": 38,
+      "label_size": 20,
+      "body_size": 13,
+      "label_bold": true,
+      "color": "red"
+    },
+    {
+      "id": "monitor",
+      "type": "box",
+      "label": "Monitor",
+      "body": "watch replies\nmeasure repeats\nclose loop",
+      "x": 1000,
+      "y": 455,
+      "w": 260,
+      "h": 135,
+      "label_h": 38,
+      "label_size": 20,
+      "body_size": 13,
+      "label_bold": true,
+      "color": "blue"
+    },
+    {
+      "id": "next-loop",
+      "type": "box",
+      "label": "Next Loop",
+      "body": "feed product\nSEO\ngrowth",
+      "x": 1000,
+      "y": 655,
+      "w": 260,
+      "h": 120,
+      "label_h": 36,
+      "label_size": 20,
+      "body_size": 13,
+      "label_bold": true,
+      "color": "blue"
+    }
+  ],
+  "edges": [
+    {
+      "from": "intake",
+      "to": "triage",
+      "label": "collect"
+    },
+    {
+      "from": "triage",
+      "to": "reply",
+      "label": "respond"
+    },
+    {
+      "from": "triage",
+      "to": "memory",
+      "label": "log evidence"
+    },
+    {
+      "from": "reply",
+      "to": "memory",
+      "label": "user context"
+    },
+    {
+      "from": "memory",
+      "to": "pattern",
+      "label": "cluster"
+    },
+    {
+      "from": "pattern",
+      "to": "decision",
+      "label": ""
+    },
+    {
+      "from": "decision",
+      "to": "fix",
+      "label": "act",
+      "points": [
+        [
+          590,
+          575
+        ],
+        [
+          820,
+          575
+        ],
+        [
+          820,
+          320
+        ],
+        [
+          1000,
+          320
+        ]
+      ]
+    },
+    {
+      "from": "decision",
+      "to": "monitor",
+      "label": "watch",
+      "points": [
+        [
+          565,
+          625
+        ],
+        [
+          820,
+          625
+        ],
+        [
+          820,
+          520
+        ],
+        [
+          1000,
+          520
+        ]
+      ],
+      "style": "dashed"
+    },
+    {
+      "from": "fix",
+      "to": "monitor",
+      "label": "ship"
+    },
+    {
+      "from": "monitor",
+      "to": "next-loop",
+      "label": "learn"
+    },
+    {
+      "from": "next-loop",
+      "to": "intake",
+      "label": "",
+      "points": [
+        [
+          1000,
+          715
+        ],
+        [
+          930,
+          835
+        ],
+        [
+          205,
+          835
+        ],
+        [
+          205,
+          728
+        ]
+      ]
+    },
+    {
+      "from": "decision",
+      "to": "journal",
+      "label": "record"
+    }
+  ],
+  "animation": {
+    "motion_color": "#2cff8f",
+    "paths": [
+      {
+        "edge": 0
+      },
+      {
+        "edge": 2
+      },
+      {
+        "edge": 4
+      },
+      {
+        "edge": 5
+      },
+      {
+        "edge": 6
+      },
+      {
+        "edge": 7
+      },
+      {
+        "edge": 8
+      },
+      {
+        "edge": 9
+      },
+      {
+        "edge": 10
+      },
+      {
+        "edge": 11
+      }
+    ],
+    "pulses": [
+      "intake",
+      "triage",
+      "memory",
+      "pattern",
+      "decision",
+      "fix",
+      "monitor",
+      "next-loop"
+    ]
+  }
+}

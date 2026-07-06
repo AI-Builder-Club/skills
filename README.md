@@ -14,6 +14,11 @@ Two flagship skill sets (more to come):
   isolated cloud box per agent so loops ship code in *parallel*).
 - **Loops** — spin up compounding agent loops on a shared, file-based knowledge base.
 
+Plus standalone utility skills:
+
+- **Visual flow GIF** — turn an article, workflow, or architecture into a static PNG +
+  animated GIF flow diagram (JSON spec → local Python/Pillow renderer).
+
 ## Loop engineer & Codebase harness
 
 The shift: you stop prompting a coding agent task-by-task, and start **designing loops**.
@@ -78,6 +83,12 @@ Run it again any time to add another loop.
 |---|---|
 | **`new-loop`** | You want a new loop/workstream the agent owns (bootstraps the knowledge base on first run). |
 
+**Visuals** — turn source material into diagrams
+
+| Skill | Use it when… |
+|---|---|
+| **`visual-flow-gif`** | You want an article, workflow, or architecture turned into a static PNG + animated GIF flow diagram (JSON spec → Python/Pillow renderer). |
+
 After setup, each session the agent reads `CLAUDE.md` + the relevant domain README, does work,
 writes artifacts, and appends to `LOG.md`. For code changes it drives `ship-change` and ships via `/pr`.
 
@@ -103,7 +114,8 @@ skills/                                a Claude Code plugin (also a marketplace)
     ├── dev-local-setup/              (harness)
     ├── e2e-setup/                    (harness)
     ├── crabbox-setup/                (harness) — isolated cloud box per agent
-    └── pr/                           (harness) — verify-before-ship  (+ ship-change.js)
+    ├── pr/                           (harness) — verify-before-ship  (+ ship-change.js)
+    └── visual-flow-gif/              (visuals) — JSON spec → PNG + GIF  (scripts/ assets/ references/)
 ```
 
 ## Go deeper
