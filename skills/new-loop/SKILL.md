@@ -22,7 +22,7 @@ Infer from the request; ask a short clarifying round only for what you can't:
 2. **goal** — one line: the outcome this loop drives.
 3. **cadence** — `manual` / `daily` / `weekly` / a cron expr. Default `manual`.
 4. **what it does** — what it consumes (signals? data? an inbox? a URL?) and produces (signals?
-   docs? a report? code changes via `pr`/`ship-change`?).
+   docs? a report? code changes shipped via `/verify`?).
 5. **tools/data** — sources or credentials it needs (point at a setup skill or `.env`; never
    inline secrets).
 
@@ -85,6 +85,7 @@ to run it again (cadence + entry point). Keep it tight.
   accrete via its Timeline.
 - **One loop = one separable workstream.** If what the user described is really part of an
   existing loop, add it there (a backlog line + a `domain:` tag) instead of a near-duplicate.
-- For loops that **ship code**, the loop's run drives the `pr` skill / `ship-change` and gets each
-  agent its own isolated stack via `crabbox-setup` (sibling harness skills in this plugin).
+- For loops that **ship code**, the loop's run works in an isolated git worktree and ships via
+  the `/verify` skill (proof + PR), giving each parallel agent its own isolated stack via
+  `crabbox-setup` (sibling harness skills in this plugin).
   Point the README's Backlog at them.

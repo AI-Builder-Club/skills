@@ -97,7 +97,7 @@ bash cbx.sh get demo /tmp/<artifact> evidence/<artifact>  # pull proof
 bash cbx.sh down demo
 ```
 Parallel check: `bash cbx.sh up demo2` in another shell — separate box, zero collisions.
-This is exactly what the `pr` skill's verifier needs when the stack is single-instance.
+This is exactly what the `/verify` skill's verifier needs when the stack is single-instance.
 
 ---
 

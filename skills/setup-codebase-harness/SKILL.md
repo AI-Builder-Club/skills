@@ -24,7 +24,8 @@ ask *"what capability is missing, and how do I make it legible and enforceable?"
 and add it.
 
 This skill orchestrates the focused sub-skills: **`dev-local-setup`**,
-**`e2e-setup`**, **`crabbox-setup`** (cloud/parallel), and **`pr`**.
+**`e2e-setup`**, **`crabbox-setup`** (cloud/parallel), and **`verifier-setup`**
+(scaffolds a repo-specific **`/verify`** loop; supersedes the older **`pr`** skill).
 
 ## 0. Assess
 
@@ -59,7 +60,8 @@ heads). Note what's missing per pillar below.
 
 - **`dev-local-setup`** → a one-command, reproducible local stack
   (`scripts/dev-local.sh up`) running every service + infra.
-- Make the app **drivable**: browser via the `playwright-cli` skill; logs reachable.
+- Make the app **drivable**: browser via the `playwright-cli` skill (installed by
+  `verifier-setup`); logs reachable.
 - **`crabbox-setup`** → an **isolated cloud box per agent** — the parallel-safe
   counterpart to dev-local. Reach for it when loops run **concurrently**: one laptop
   can't host N full stacks (fixed ports, one Docker daemon, one DB), and per-worktree
@@ -73,8 +75,9 @@ heads). Note what's missing per pillar below.
 - **`e2e-setup`** → a trustworthy e2e gate: real flows (not bypass), a reusable
   auth/session helper, layered client → server → product assertions, video/trace
   evidence, sandbox-only external services.
-- **`pr`** → the verify-before-ship loop: a fresh **verifier sub-agent drives the
-  real app** to confirm the just-built feature works; the main agent fixes until
+- **`verifier-setup`** → scaffolds a repo-specific **`/verify`** skill (the verify-before-ship
+  loop): a fresh **verifier sub-agent drives the real app** to confirm the just-built feature
+  works; the main agent fixes until
   green, runs the codified regression sweep, and opens a PR with a reviewable proof
   link. Add the session helper so the verifier can reach login-gated features.
 
@@ -91,7 +94,7 @@ heads). Note what's missing per pillar below.
 
 ## Order & what you leave behind
 
-**1a (map) → 2 (dev-local) → 3 (e2e + /pr)**, then **1b (lints)** and **4** as the
+**1a (map) → 2 (dev-local) → 3 (e2e + verifier-setup)**, then **1b (lints)** and **4** as the
 repo matures. The artifacts — slim map + `docs/`, `scripts/dev-local.sh`, an `e2e/`
-suite, the `/pr` skill, and custom lints — are each a reusable, legible capability
+suite, the generated `/verify` skill, and custom lints — are each a reusable, legible capability
 that compounds. Prefer "boring", composable, stable tech the agent can fully model.

@@ -75,7 +75,7 @@ Run it again any time to add another loop.
 | **`dev-local-setup`** | You need a one-command local dev stack (`scripts/dev-local.sh up`). |
 | **`e2e-setup`** | The repo has no (or weak) e2e — add a real per-PR test gate. |
 | **`crabbox-setup`** | Loops ship code **in parallel** — give each agent its own isolated **cloud** stack (one laptop can't run N). The cloud counterpart to dev-local. |
-| **`pr`** | A change is ready — a fresh sub-agent proves the feature works, then opens the PR with proof. |
+| **`verifier-setup`** | Make a repo's work verifiable — scaffolds a repo-specific **`/verify`** skill (a fresh sub-agent drives the app, captures screenshot/video proof, opens the PR with it embedded). Ensures dev-local + the browser driver exist first. |
 
 **Loops** — the shared knowledge base
 
@@ -90,7 +90,7 @@ Run it again any time to add another loop.
 | **`visual-flow-gif`** | You want an article, workflow, or architecture turned into a static PNG + animated GIF flow diagram (JSON spec → Python/Pillow renderer). |
 
 After setup, each session the agent reads `CLAUDE.md` + the relevant domain README, does work,
-writes artifacts, and appends to `LOG.md`. For code changes it drives `ship-change` and ships via `/pr`.
+writes artifacts, and appends to `LOG.md`. For code changes it works in an isolated worktree and verifies via `/verify` before shipping.
 
 ## Requirements
 
@@ -114,7 +114,7 @@ skills/                                a Claude Code plugin (also a marketplace)
     ├── dev-local-setup/              (harness)
     ├── e2e-setup/                    (harness)
     ├── crabbox-setup/                (harness) — isolated cloud box per agent
-    ├── pr/                           (harness) — verify-before-ship  (+ ship-change.js)
+    ├── verifier-setup/               (harness) — generates a repo's /verify skill  (assets/verify.template.md)
     └── visual-flow-gif/              (visuals) — JSON spec → PNG + GIF  (scripts/ assets/ references/)
 ```
 

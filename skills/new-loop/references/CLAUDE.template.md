@@ -68,9 +68,11 @@ Domains (now): {{LIST_YOUR_LOOPS — or "none yet; run new-loop to create the fi
      The worktree discipline below is generic and battle-tested — keep it if you keep this section. -->
 - **Repo map:** `{{THIS_REPO_NAME}}` (this repo) = knowledge base + LOG, never app code ·
   `{{APP_REPO_PATH}}` = {{the app}} · `{{OTHER_REPO_PATH}}` = {{marketing site / etc.}}.
-- **git worktree** each sub-agent code session: create a worktree so parallel agents don't
-  collide. Read the target repo's own `CLAUDE.md` for its rules. The `ship-change` workflow
-  does this for you.
+- **git worktree** each sub-agent code session: create a worktree off the base branch so
+  parallel agents don't collide, and copy over the target repo's gitignored `.env*` files (a
+  fresh worktree has none, so the app can't boot). Read the target repo's own `CLAUDE.md` for
+  its rules. When the change is built, run the repo's **`/verify`** skill — it proves the
+  feature works and opens the PR with the proof.
 - **Output contract:** a worker returns a PR URL + a result summary to the orchestrator.
   Knowledge-base updates (READMEs, LOG.md) stay with the orchestrator, not the worker.
 - **Worktree cleanup (mandatory):** after the PR is pushed, the worker removes its worktree
