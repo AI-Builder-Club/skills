@@ -13,7 +13,8 @@ user_invocable: true
 
 E2e tests verify the whole running system *through the app* (browser/API), not one
 module. They are the per-PR gate. Pairs with `dev-local-setup` (a reproducible
-local stack) and `pr` (the verify→ship loop).
+local stack) and `verifier-setup` (which scaffolds the repo's `/verify` skill —
+the verify→ship loop this gate feeds into).
 
 ## Where it lives
 - **Unit/integration tests** stay inside each app/package — they own one module.
