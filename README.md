@@ -18,6 +18,9 @@ Plus standalone utility skills:
 
 - **Visual flow GIF** — turn an article, workflow, or architecture into a static PNG +
   animated GIF flow diagram (JSON spec → local Python/Pillow renderer).
+- **Open agent teams** — delegate tasks to *any* CLI agent (claude, codex, grok, aider, …)
+  running in a detached tmux session, with a race-safe done-signal protocol, multi-turn
+  iteration, and a CLAUDE.md delegation-rules template (coordinator/executor roles).
 
 ## Loop engineer & Codebase harness
 
@@ -89,6 +92,12 @@ Run it again any time to add another loop.
 |---|---|
 | **`visual-flow-gif`** | You want an article, workflow, or architecture turned into a static PNG + animated GIF flow diagram (JSON spec → Python/Pillow renderer). |
 
+**Delegation** — run other agents as executors
+
+| Skill | Use it when… |
+|---|---|
+| **`open-agent-teams`** | You want to delegate work to any CLI agent (claude, codex, grok, pi, opencode) in an observable, detached tmux session — start, wait, iterate, and stop via the bundled `tdel` helper. Ships a `CLAUDE.md` delegation-rules template (coordinator vs executor) in `references/`. |
+
 After setup, each session the agent reads `CLAUDE.md` + the relevant domain README, does work,
 writes artifacts, and appends to `LOG.md`. For code changes it works in an isolated worktree and verifies via `/verify` before shipping.
 
@@ -100,6 +109,8 @@ writes artifacts, and appends to `LOG.md`. For code changes it works in an isola
   setup. They use Codex for review if available, and degrade gracefully if not.
 - `crabbox-setup` (optional, for parallel cloud boxes) needs the `crabbox` CLI + a provider
   (Daytona: `daytona` CLI / `DAYTONA_API_KEY`).
+- `open-agent-teams` needs `tmux`, plus whichever CLI agents you delegate to on your PATH
+  (claude, codex, grok, pi, opencode, …).
 
 ## Repo layout
 
@@ -115,7 +126,8 @@ skills/                                a Claude Code plugin (also a marketplace)
     ├── e2e-setup/                    (harness)
     ├── crabbox-setup/                (harness) — isolated cloud box per agent
     ├── verifier-setup/               (harness) — generates a repo's /verify skill  (assets/verify.template.md)
-    └── visual-flow-gif/              (visuals) — JSON spec → PNG + GIF  (scripts/ assets/ references/)
+    ├── visual-flow-gif/              (visuals) — JSON spec → PNG + GIF  (scripts/ assets/ references/)
+    └── open-agent-teams/             (delegation) — any CLI agent in tmux  (scripts/tdel · references/CLAUDE.delegation-template.md)
 ```
 
 ## Go deeper

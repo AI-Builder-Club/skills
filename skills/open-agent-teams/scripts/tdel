@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+# tdel — delegate tasks to any CLI agent running in a detached tmux session.
+# Completion protocol: the prompt instructs the agent to write a summary file
+# and touch a done-sentinel file. File sentinels (not `tmux wait-for`) so a
+# signal can never be lost to the no-waiter race, and waits can time out.
+set -euo pipefail
+
+BASE="${TDEL_BASE:-/tmp/agent-delegate}"
+
+die() { echo "tdel: $*" >&2; exit 1; }
+
+# Resolve a REAL tmux binary. Agent harnesses (orca, draft) put shell-script
+# shims named `tmux` on PATH that whitelist commands and fake exit codes.
+TMUX_BIN="${TDEL_TMUX:-}"
+if [ -z "$TMUX_BIN" ]; then
+  for t in $(which -a tmux 2>/dev/null); do
+    case "$(file -b "$t" 2>/dev/null)" in *script*) continue ;; esac
+    TMUX_BIN="$t"; break
+  done
+fi
+[ -n "$TMUX_BIN" ] || die "no real tmux binary found on PATH (only shims?); set TDEL_TMUX"
+# Own socket dir: harness env may export TMUX/TMUX_TMPDIR pointing at a
+# harness-managed (possibly missing) location; also keeps our sessions
+# isolated from any surrounding tmux the coordinator itself runs inside.
+mkdir -p "$BASE/.sock"
+tmux() { env -u TMUX TMUX_TMPDIR="$BASE/.sock" "$TMUX_BIN" "$@"; }
+
+usage() {
+  cat <<'EOF'
+usage:
+  tdel start <session> <agent-cmd> <prompt>   # e.g. tdel start a1 "claude --dangerously-skip-permissions" "make X"
+  tdel send  <session> <prompt>               # follow-up turn to a running agent
+  tdel wait  <session> [timeout-sec]          # block until current turn done (default 1800s); prints summary
+  tdel key   <session> <keys...>              # raw keystrokes (dialogs), e.g. tdel key a1 Enter
+  tdel peek  <session> [lines]                # capture last N pane lines (default 60)
+  tdel result <session> [turn]                # print a turn's summary file (default: current turn)
+  tdel status                                 # list sessions and turn state
+  tdel stop  <session>                        # kill session and clean up state
+EOF
+  exit 1
+}
+
+# Single-line the prompt: embedded newlines in send-keys act as Enter presses
+# and would submit a TUI agent's input box early.
+flatten() { printf '%s' "$1" | tr '\n' ' '; }
+
+suffix() { # $1=result-file $2=done-file
+  printf 'When you are completely done, write a short summary of what you did to %s and then run: touch %s' "$1" "$2"
+}
+
+session_dir() { echo "$BASE/$1"; }
+cur_turn()    { cat "$(session_dir "$1")/turn" 2>/dev/null || die "no state for session '$1' (did you tdel start?)"; }
+
+cmd="${1:-}"; [ $# -gt 0 ] && shift
+case "$cmd" in
+
+start)
+  [ $# -eq 3 ] || usage
+  session="$1" agent_cmd="$2" prompt="$3"
+  tmux has-session -t "=$session" 2>/dev/null && die "tmux session '$session' already exists"
+  dir="$(session_dir "$session")"; mkdir -p "$dir"; echo 1 > "$dir/turn"
+  res="$dir/turn-1.md" done_f="$dir/turn-1.done"
+  full="$(flatten "$prompt") $(suffix "$res" "$done_f")"
+  # shellcheck disable=SC2086 — agent_cmd is intentionally word-split
+  tmux new-session -d -s "$session" $agent_cmd "$full"
+  echo "started '$session' turn 1 — block with: tdel wait $session"
+  ;;
+
+send)
+  [ $# -eq 2 ] || usage
+  session="$1" prompt="$2"
+  tmux has-session -t "=$session" 2>/dev/null || die "no tmux session '$session'"
+  dir="$(session_dir "$session")"
+  turn=$(( $(cur_turn "$session") + 1 )); echo "$turn" > "$dir/turn"
+  res="$dir/turn-$turn.md" done_f="$dir/turn-$turn.done"
+  full="$(flatten "$prompt") $(suffix "$res" "$done_f")"
+  tmux send-keys -t "$session" -l "$full"
+  # Slash/skill popup hazard: text starting with / or $ opens an autocomplete
+  # popup in claude/codex/grok; a too-fast Enter selects the popup instead of
+  # submitting, and grok needs a genuine second Enter. Longer settle + retry.
+  case "$prompt" in
+    /*|\$*) sleep 1.2; tmux send-keys -t "$session" Enter; sleep 1; tmux send-keys -t "$session" Enter ;;
+    *)      sleep 0.5; tmux send-keys -t "$session" Enter ;;
+  esac
+  echo "sent turn $turn to '$session' — block with: tdel wait $session"
+  ;;
+
+key)
+  # raw keystrokes for dialogs (trust prompts etc.), e.g.: tdel key a1 Enter
+  [ $# -ge 2 ] || usage
+  session="$1"; shift
+  tmux send-keys -t "$session" "$@"
+  ;;
+
+wait)
+  [ $# -ge 1 ] || usage
+  session="$1" timeout="${2:-1800}"
+  dir="$(session_dir "$session")"
+  turn="$(cur_turn "$session")"
+  done_f="$dir/turn-$turn.done" res="$dir/turn-$turn.md"
+  elapsed=0
+  while [ ! -f "$done_f" ]; do
+    tmux has-session -t "=$session" 2>/dev/null || die "session '$session' died before signaling done (turn $turn)"
+    [ "$elapsed" -ge "$timeout" ] && {
+      echo "tdel: timeout after ${timeout}s waiting on turn $turn; last pane output:" >&2
+      tmux capture-pane -p -t "$session" -S -40 >&2 || true
+      exit 124
+    }
+    sleep 2; elapsed=$((elapsed + 2))
+  done
+  echo "turn $turn done."
+  [ -f "$res" ] && { echo "--- summary ---"; cat "$res"; } || echo "(agent wrote no summary file)"
+  ;;
+
+peek)
+  [ $# -ge 1 ] || usage
+  tmux capture-pane -p -t "$1" -S "-${2:-60}"
+  ;;
+
+result)
+  [ $# -ge 1 ] || usage
+  session="$1"; turn="${2:-$(cur_turn "$session")}"
+  cat "$(session_dir "$session")/turn-$turn.md"
+  ;;
+
+status)
+  [ -d "$BASE" ] || { echo "no sessions"; exit 0; }
+  for dir in "$BASE"/*/; do
+    [ -d "$dir" ] || continue
+    s="$(basename "$dir")"; t="$(cat "$dir/turn" 2>/dev/null || echo '?')"
+    if [ -f "$dir/turn-$t.done" ]; then state=done; else state=running; fi
+    tmux has-session -t "=$s" 2>/dev/null || state="dead"
+    echo "$s  turn=$t  $state"
+  done
+  ;;
+
+stop)
+  [ $# -eq 1 ] || usage
+  tmux kill-session -t "=$1" 2>/dev/null || true
+  rm -rf "$(session_dir "$1")"
+  echo "stopped '$1'"
+  ;;
+
+*) usage ;;
+esac

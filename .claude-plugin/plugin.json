@@ -18,6 +18,9 @@
     "daytona",
     "pr",
     "diagrams",
-    "visualization"
+    "visualization",
+    "delegation",
+    "tmux",
+    "multi-agent"
   ]
 }
